@@ -24,7 +24,7 @@ class ExitCLI(Exception):
     pass
 
 
-def ask_question(question: str) -> bool:
+def ask_question(question):
     """Method to ask the user a yes/no question
 
     Args:
