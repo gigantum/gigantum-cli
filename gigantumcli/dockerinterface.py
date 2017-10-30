@@ -78,11 +78,12 @@ class DockerInterface(object):
         """
         if sys.platform.startswith('linux'):
             if ask_question("Docker isn't installed. Would you like to try to install it now?"):
+                installer_path = os.path.expanduser('~/get-docker.sh')
                 resp = requests.get('https://get.docker.com/')
-                with open('~/get-docker.sh', 'wt') as file_handle:
+                with open(installer_path, 'wt') as file_handle:
                     file_handle.write(resp.content)
 
-                print_cmd = "An installer script has been downloaded to ~/get-docker.sh:\n"
+                print_cmd = "An installer script has been downloaded to {}:\n".format(installer_path)
                 print_cmd = "{}- Run `sudo sh ~/get-docker.sh`\n".format(print_cmd)
                 print_cmd = "{}- Wait for installer to complete\n".format(print_cmd)
                 print_cmd = "{}- Run `sudo usermod -aG docker <your-user-name>`\n".format(print_cmd)
