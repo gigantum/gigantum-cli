@@ -118,10 +118,15 @@ def start(tag=None):
         tag(str): Tag to run, defaults to latest
 
     Returns:
-        None
+        None 
     """
     # Check if Docker is running
     docker = DockerInterface()
+
+    # Check if working dir exists
+    working_dir = os.path.expanduser("~/gigantum")
+    if not os.path.exists(working_dir):
+        os.makedirs(working_dir)
 
     if not tag:
         tag = "latest"
