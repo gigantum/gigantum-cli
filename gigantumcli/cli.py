@@ -21,7 +21,8 @@ import argparse
 from gigantumcli.actions import install, update, start, stop, feedback, ExitCLI
 import sys
 
-if __name__ == '__main__':
+
+def main():
     # Setup supported components and commands
     actions = {"install": "Install the Gigantum application Docker Image",
                "update": "Update the Gigantum application Docker Image",
@@ -65,3 +66,7 @@ if __name__ == '__main__':
     except ExitCLI as err:
         print(err)
         sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

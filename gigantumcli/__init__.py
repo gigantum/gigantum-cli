@@ -17,15 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import requests
 
 # Gigantum CLI Version
 __version__ = "0.1"
 
-
-#r = requests.get('https://pypi.python.org/pypi/gigantum/json').json()
-#r = r['info']['version']
-#if r != __version__:
-#    print("You are using version {}. A newer version of the Gigantum CLI is available: {} ".format(__version__, r) +
-#          "\n\n'pip install -U gigantum' to update.")
-#
