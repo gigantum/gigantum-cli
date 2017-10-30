@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from __future__ import print_function
-import six
+from six.moves import input
 
 
 class ExitCLI(Exception):
@@ -39,7 +39,7 @@ def ask_question(question):
 
     while True:
         print("{} [y/n]: ".format(question), end="")
-        choice = six.input().lower().strip()
+        choice = input().lower().strip()
         if choice in valid_response:
             return valid_response[choice]
         else:
