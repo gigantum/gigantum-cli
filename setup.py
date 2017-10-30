@@ -32,7 +32,7 @@ setup(
     entry_points={
         'console_scripts': ['gigantum=gigantumcli.cli:main'],
     },
-    packages=find_packages('gigantumcli'),
+    packages=['gigantumcli'],
     include_package_data=False,
 
     url='https://github.com/gigantum/gigantum-cli',
