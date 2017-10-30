@@ -23,7 +23,7 @@ import os
 import webbrowser
 import time
 
-from gigantumcli.docker import DockerInterface
+from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
 from gigantumcli.utilities import ask_question, ExitCLI
 
