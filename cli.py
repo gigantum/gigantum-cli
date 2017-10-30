@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import argparse
-from gigantumcli.actions import install, update
-
+from gigantumcli.actions import install, update, start, stop, feedback, ExitCLI
+import sys
 
 if __name__ == '__main__':
     # Setup supported components and commands
@@ -48,10 +48,20 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.action == "install":
-        install()
-    elif args.action == "update":
-        update(args.tag)
-    else:
-        raise ValueError("Unsupported action `{}` provided. Available actions: {}".format(args.action,
-                                                                                          ", ".join(actions.keys())))
+    try:
+        if args.action == "install":
+            install()
+        elif args.action == "update":
+            update(args.tag)
+        elif args.action == "start":
+            start(args.tag)
+        elif args.action == "stop":
+            stop()
+        elif args.action == "feedback":
+            feedback()
+        else:
+            raise ValueError("Unsupported action `{}` provided. Available actions: {}".format(args.action,
+                                                                                              ", ".join(actions.keys())))
+    except ExitCLI as err:
+        print(err)
+        sys.exit(1)

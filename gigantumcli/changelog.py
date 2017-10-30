@@ -55,12 +55,36 @@ class ChangeLog(object):
         latest_hash = self.data['latest']['id']
         return latest_hash != tag
 
-    def display_changelog(self, tag="latest"):
+    def get_changelog(self, tag="latest"):
         """Method to print the changelog data
 
         Args:
             tag(str): Version of the changelog to grab
 
         Returns:
-            None
+            str
         """
+        if not self.data:
+            # No changelog data was available...probably no internet connection
+            return None
+
+        if tag not in self.data:
+            raise ValueError("Tag {} not available".format(tag))
+
+        data = self.data[tag]
+        msg = "Version: {}\n".format(data['id'])
+        msg = "{}Release Date: {}\n".format(msg, data['date'])
+        msg = "{}Note: \n".format(msg)
+
+        # Show notices
+        for note in data['messages']:
+            msg = "{}  - {}\n".format(msg, note)
+
+        # Show changes
+        for change_key in data['changes']:
+            msg = "{}\n{}: \n".format(msg, change_key)
+            for change_str in data['changes'][change_key]:
+                msg = "{}  - {}\n".format(msg, change_str)
+
+        return msg
+

@@ -19,6 +19,11 @@
 # SOFTWARE.
 
 
+class ExitCLI(Exception):
+    """Custom Exception when exit with 1 should happen"""
+    pass
+
+
 def ask_question(question: str) -> bool:
     """Method to ask the user a yes/no question
 

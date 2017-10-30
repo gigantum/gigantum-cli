@@ -25,8 +25,9 @@ import re
 import subprocess
 import sys
 import requests
+from docker.errors import NotFound
 
-from gigantumcli.utilities import ask_question
+from gigantumcli.utilities import ask_question, ExitCLI
 
 
 class DockerInterface(object):
@@ -41,11 +42,14 @@ class DockerInterface(object):
             else:
                 # Docker isn't running
                 self._print_running_help()
-                sys.exit(1)
+                raise ExitCLI()
         else:
             # Docker isn't installed
             self._print_installing_help()
-            sys.exit(1)
+            raise ExitCLI()
+
+        # Name of Docker volume used to share between containers
+        self.share_vol_name = "gigantum-container-share-vol"
 
     @staticmethod
     def _print_running_help():
@@ -85,8 +89,7 @@ class DockerInterface(object):
                 print_cmd = "{}  - This lets you run Docker commands not as root\n".format(print_cmd)
                 print_cmd = "{}- Log out and then log back in\n".format(print_cmd)
             else:
-                print("You must install Docker to use the Gigantum application")
-                sys.exit(1)
+                raise ExitCLI("You must install Docker to use the Gigantum application")
 
         elif sys.platform.startswith('darwin'):
             print_cmd = "Docker isn't installed. Get the Docker for Mac app here: "
@@ -205,3 +208,32 @@ class DockerInterface(object):
                     raise e
         else:
             return docker.from_env()
+
+    def share_volume_exists(self):
+        """Check if the container-container share volume exists
+
+        Returns:
+            bool
+        """
+        try:
+            self.client.volumes.get(self.share_vol_name)
+            return True
+        except NotFound:
+            return False
+
+    def create_share_volume(self):
+        """Create the share volume
+
+        Returns:
+            None
+        """
+        self.client.volumes.create(self.share_vol_name)
+
+    def remove_share_volume(self):
+        """Remove the share volume
+
+        Returns:
+            None
+        """
+        volume = self.client.volumes.get(self.share_vol_name)
+        volume.remove()
