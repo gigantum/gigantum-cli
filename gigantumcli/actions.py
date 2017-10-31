@@ -73,7 +73,10 @@ def update(tag=None):
             tag = 'latest'
 
             # Get id of current labmanager install
-            current_image = docker.client.images.get("gigantum/labmanager:latest")
+            try:
+                current_image = docker.client.images.get("gigantum/labmanager:latest")
+            except ImageNotFound:
+                raise ExitCLI("Gigantum Image not yet installed. Run 'gigantum install' first.")
             short_id = current_image.short_id.split(':')[1]
 
             # Check if there is an update available

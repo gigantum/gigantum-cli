@@ -36,7 +36,7 @@ def fixture_changelog_data():
         yield data
 
 
-class TestLabManagerBuild(object):
+class TestChangelog(object):
     def test_constructor(self, fixture_changelog_data):
         """Test creating an object, mocking the query for actual data"""
         cl = ChangeLog()
