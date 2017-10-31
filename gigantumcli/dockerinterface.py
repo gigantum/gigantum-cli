@@ -49,7 +49,7 @@ class DockerInterface(object):
             raise ExitCLI()
 
         # Name of Docker volume used to share between containers
-        self.share_vol_name = "gigantum-container-share-vol"
+        self.share_vol_name = "labmanager_share_vol"
 
     @staticmethod
     def _print_running_help():
