@@ -81,7 +81,9 @@ If you encounter any issues or have any questions, do not hesitate in contacting
 This package is available for install via `pip`. It runs on Python 2 and 3 and supports Windows, OSX and Linux. Currently,
 Windows support is limited to Windows 10 Professional.
 
-1. (Recommended, but not required) Create a virtual environment before installing the CLI
+1. To isolate this installation from your system Python, it is often best to create a virtual environment first.
+This is not required, but recommended if you feel comfortable enough with Python. The Gigantum CLI installs a minimal set of 
+Python dependencies, so in general should be safe to simply install if preferred.
 
 	Using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/):
 	
