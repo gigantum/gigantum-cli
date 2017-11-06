@@ -1,0 +1,15 @@
+{
+	"latest": {
+		"date": "2017-10-30",
+		"id": "fb4cced9",
+		"changes": {
+			"Added": ["Added something"],
+			"Changed": ["Changed something"],
+			"Deprecated": ["Deprecated something"],
+			"Removed": ["Removed something"],
+			"Fixed": ["Added something 1",
+			          "Added something 2"]
+		},
+		"messages": ["notification 1"]
+	}
+}
