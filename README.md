@@ -1,4 +1,6 @@
-## Gigantum CLI
+## Gigantum CLI 
+[![PyPI version](https://badge.fury.io/py/gigantum.svg)](https://badge.fury.io/py/gigantum)
+
 Simple user-facing command line interface (CLI) for installing and running the Gigantum application locally
 
 ## Introduction
