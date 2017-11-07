@@ -33,7 +33,7 @@ setup(
         'console_scripts': ['gigantum=gigantumcli.cli:main'],
     },
     packages=['gigantumcli'],
-    include_package_data=False,
+    include_package_data=True,
 
     url='https://github.com/gigantum/gigantum-cli',
     license='MIT',

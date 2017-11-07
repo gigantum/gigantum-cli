@@ -39,7 +39,7 @@ class ChangeLog(object):
         data = None
         try:
             response = requests.get(self._change_log_url)
-            data = json.loads(response.content)
+            data = response.json()
         finally:
             return data
 
@@ -77,8 +77,9 @@ class ChangeLog(object):
         msg = "{}Note: \n".format(msg)
 
         # Show notices
-        for note in data['messages']:
-            msg = "{}  - {}\n".format(msg, note)
+        if 'messages' in data:
+            for note in data['messages']:
+                msg = "{}  - {}\n".format(msg, note)
 
         # Show changes
         for change_key in data['changes']:

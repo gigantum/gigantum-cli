@@ -80,7 +80,7 @@ class DockerInterface(object):
             if ask_question("Docker isn't installed. Would you like to try to install it now?"):
                 installer_path = os.path.expanduser('~/get-docker.sh')
                 resp = requests.get('https://get.docker.com/')
-                with open(installer_path, 'wt') as file_handle:
+                with open(installer_path, 'wb') as file_handle:
                     file_handle.write(resp.content)
 
                 print_cmd = "An installer script has been downloaded to {}:\n".format(installer_path)
