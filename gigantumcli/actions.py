@@ -31,6 +31,10 @@ from gigantumcli.utilities import ask_question, ExitCLI
 
 def install():
     """Method to install the Gigantum Image"""
+    # Make sure user is not root
+    if getpass.getuser() == 'root':
+        raise ExitCLI("Do not run `gigantum start` as root.")
+
     docker = DockerInterface()
 
     try:
@@ -65,6 +69,10 @@ def update(tag=None):
     Returns:
         None
     """
+    # Make sure user is not root
+    if getpass.getuser() == 'root':
+        raise ExitCLI("Do not run `gigantum start` as root.")
+
     docker = DockerInterface()
 
     try:

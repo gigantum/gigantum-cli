@@ -5,8 +5,10 @@ Simple user-facing command line interface (CLI) for installing and running the G
 
 ## Introduction
 This Python package is provided as a method to install and run the Gigantum application, locally on your computer. It provides a
-simple command line interface to install, update, start, and stop the application. Currently this is only targeting
-alpha testers and not generally available yet.
+simple command line interface to install, update, start, and stop the application. 
+
+**Currently this is package only targeting alpha testers and not generally available yet and you must be granted
+access to the Gigantum Docker Image**
 
 If you encounter any issues or have any questions, do not hesitate in contacting Gigantum for help. 
 
@@ -26,8 +28,9 @@ If you encounter any issues or have any questions, do not hesitate in contacting
     Docker [website](https://www.docker.com/community-edition#/download)
     
     - Windows:
-        - **NOTE: Windows is temporarily not supported. Fixes are coming in the next release**
+        - **NOTE: Windows is only partially supported. Additional testing is still required due to challengs with Docker on Windows**
         - Requires Microsoft Windows 10 Professional or Enterprise 64-bit
+        - Requires Docker CE Stable
         - [https://store.docker.com/editions/community/docker-ce-desktop-windows](https://store.docker.com/editions/community/docker-ce-desktop-windows)
     
     - Mac:
@@ -118,12 +121,6 @@ Usage of the CLI then becomes:
     - **Run this command after installing the CLI for the first time.**
     - Depending on your bandwidth, installing for the first time can take a while as the Docker Image layers are downloaded.
     - This command installs the Gigantum application Docker Image for the first time and configures your working directory.
-    
-        The Gigantum working directory changes based on your operating system:
-        
-        - Windows: `C:\\Users\<username>\gigantum`
-        - OSX: `/Users/<username>/gigantum`
-        - Linux: `/home/<username>/gigantum`
 
 - `update`
     - This command updates an existing installation to the latest version of the application
@@ -135,6 +132,8 @@ Usage of the CLI then becomes:
     - This command starts the Gigantum application
     - Once started, the application User Inteface is available at [http://localhost:10000](http://localhost:10000)
     - Currently, any running Jupyter instance will be available at [http://localhost:8888](http://localhost:8888) once launched
+    - **Once you create your first LabBook, check your Gigantum working directory for LabBook to make sure everything is
+    configured properly. This directory is organized by
     
 - `stop`
     - This command currently stops the Gigantum Application and *ALL* Docker containers on your computer
@@ -144,6 +143,28 @@ Usage of the CLI then becomes:
     
 ## Usage
 
+### Gigantum Working Directory
+
+The Gigantum working directory is where all your work is stored on your local filesystem. You can interact directly
+with this directory if you'd like, but it is recommended to use the Gigantum UI as it ensures all activity is properly
+recorded.
+
+The Gigantum working directory location changes based on your operating system:
+        
+    - Windows: C:\\Users\<username>\gigantum
+    - OSX: /Users/<username>/gigantum
+    - Linux: /home/<username>/gigantum
+    
+This directory follows a standard directory structure that organizes content by user and namespace. A namespace is the 
+"owner" of a LabBook, and typically the creator. The working directory is organized as illustrated below:
+
+    - ~/gigantum
+        - <logged in user's username>
+            - <namespace>
+                - labbooks
+                    - <labbook name>
+        
+        
 ### User Account
 To use the Gigantum application you must have a Gigantum user account. When you run the application for the first time, you can register. 
 
@@ -180,18 +201,36 @@ After everything is installed, a typical usage would follow a workflow like this
 
 ### Sharing 
 
-Currently, sharing is limited to an export/import workflow. If you want to share a LabBook with someone, click on the Export button in the LabBook Overview page.
+There are two ways to share LabBooks; export/import and remote repository-based sharing. 
 
-This will download a `.lbk` archive file to the `export` directory in your Gigantum working directory. You can then share this file with someone else.
+### Export/Import
+To export a LabBook, click on the the Export button in the LabBook Overview page.
 
-To import, simply drag-and-drop the `.lbk` file into the Import area in the LabBook Overview page. Note that if the file is large, import can take a little while.
+This will download a `.lbk` archive file to the `export` directory in your Gigantum working directory. 
+You can then share this file with someone else or archive it.
 
-You cannot duplicate LabBooks. If you want to import a LabBook "on top" of an existing LabBook, currently you'll have to rename the original LabBook before Import.
+To import, simply drag-and-drop the `.lbk` file into the Import area in the LabBook Overview page. 
+Note that if the file is large, import can take a little while. Also, importing a LabBook detaches it from the source,
+so it will always import into the currently logged in user's namespace.
+
+You cannot duplicate LabBooks. If you want to import a LabBook "on top" of an existing LabBook, currently you'll 
+have to rename the original LabBook before Import.
+
+### Sharing via remote repository
+Currently, only sharing to the Gigantum cloud is supported.
+
+To share via a remote repository, simply click the "publish" button in the LabBook action menu, located in the top right
+corner of an opened LabBook. Once published, you'll receive a link that you can share with other users.
+
+By default all LabBooks are private. Click on the `collaborators` button in the LabBook action menu. Enter the Gigantum
+username of any users you wish to collaborate with. They can then enter the link returned by the publish operation into
+the new LabBook wizard to download and open your LabBook.
     
+
 ## Providing Feedback
 
 If you encounter any issues using the Gigantum CLI, submit them to this [GitHub repository issues page](https://github.com/gigantum/gigantum-cli/issues).
 
-If you encounter any issues or have any feedback while using the the Gigantum Application, use the feedback command to open the feedback form.
+If you encounter any issues or have any feedback while using the the Gigantum Application, use the `gigantum feedback` command to open the feedback form.
 
 For urgent issues, contact Gigantum.
