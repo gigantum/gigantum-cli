@@ -26,14 +26,14 @@ import getpass
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
-from gigantumcli.utilities import ask_question, ExitCLI
+from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
 
 
 def install():
     """Method to install the Gigantum Image"""
     # Make sure user is not root
-    if getpass.getuser() == 'root':
-        raise ExitCLI("Do not run `gigantum start` as root.")
+    if is_running_as_admin():
+        raise ExitCLI("Do not run `gigantum install` as root.")
 
     docker = DockerInterface()
 
@@ -70,8 +70,8 @@ def update(tag=None):
         None
     """
     # Make sure user is not root
-    if getpass.getuser() == 'root':
-        raise ExitCLI("Do not run `gigantum start` as root.")
+    if is_running_as_admin():
+        raise ExitCLI("Do not run `gigantum update` as root.")
 
     docker = DockerInterface()
 
@@ -137,7 +137,7 @@ def start(tag=None):
     docker = DockerInterface()
 
     # Make sure user is not root
-    if getpass.getuser() == 'root':
+    if is_running_as_admin():
         raise ExitCLI("Do not run `gigantum start` as root.")
 
     # Check if working dir exists
