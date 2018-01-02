@@ -37,9 +37,10 @@ class DockerInterface(object):
         """Constructor"""
         # Get a docker client, or print help on how to install/run docker first
         if self.docker_is_installed():
-            if self.docker_is_running():
-                self.client = self._get_docker_client()
-            else:
+            # Get client
+            self.client = self._get_docker_client()
+
+            if not self.docker_is_running():
                 # Docker isn't running
                 self._print_running_help()
                 raise ExitCLI()
@@ -140,9 +141,12 @@ class DockerInterface(object):
     def docker_is_running(self):
         """Method to check if docker is running"""
         try:
-            self._get_docker_client()
-            return True
-        except ValueError:
+            if not self.client:
+                self._get_docker_client()
+            return self.client.ping()
+        except requests.exceptions.ConnectionError as _:
+            return False
+        except docker.errors.APIError as _:
             return False
 
     @staticmethod
@@ -153,9 +157,13 @@ class DockerInterface(object):
         if not os.path.exists(socket_path):
             raise ValueError('No docker.sock on machine (is a Docker server installed?)')
 
-        socket_connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        socket_connection.connect(socket_path)
-        socket_connection.send(b'GET http://*/version HTTP/1.1\r\nHost: *\r\n\r\n')
+        try:
+            socket_connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            socket_connection.connect(socket_path)
+            socket_connection.send(b'GET http://*/version HTTP/1.1\r\nHost: *\r\n\r\n')
+        except ConnectionRefusedError:
+            # Assume docker was running at some point to setup env vars, but not running now
+            raise ValueError("Could not read from Docker socket")
 
         response_data = socket_connection.recv(4000)
         content_lines = response_data.decode().split('\r\n')

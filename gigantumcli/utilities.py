@@ -19,6 +19,8 @@
 # SOFTWARE.
 from __future__ import print_function
 from six.moves import input
+import ctypes
+import os
 
 
 class ExitCLI(Exception):
@@ -44,3 +46,17 @@ def ask_question(question):
             return valid_response[choice]
         else:
             print("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
+
+
+def is_running_as_admin():
+    """Method to check if the python script is running as an administrator
+
+    Returns:
+        bool
+    """
+    try:
+        is_admin = os.getuid() == 0
+    except AttributeError:
+        is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+
+    return is_admin
