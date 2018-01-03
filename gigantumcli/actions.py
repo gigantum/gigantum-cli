@@ -22,14 +22,19 @@ from docker.errors import APIError, ImageNotFound, NotFound
 import os
 import webbrowser
 import time
+import getpass
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
-from gigantumcli.utilities import ask_question, ExitCLI
+from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
 
 
 def install():
     """Method to install the Gigantum Image"""
+    # Make sure user is not root
+    if is_running_as_admin():
+        raise ExitCLI("Do not run `gigantum install` as root.")
+
     docker = DockerInterface()
 
     try:
@@ -64,6 +69,10 @@ def update(tag=None):
     Returns:
         None
     """
+    # Make sure user is not root
+    if is_running_as_admin():
+        raise ExitCLI("Do not run `gigantum update` as root.")
+
     docker = DockerInterface()
 
     try:
@@ -123,11 +132,16 @@ def start(tag=None):
     Returns:
         None 
     """
+    print("Verifying Docker is available...")
     # Check if Docker is running
     docker = DockerInterface()
 
+    # Make sure user is not root
+    if is_running_as_admin():
+        raise ExitCLI("Do not run `gigantum start` as root.")
+
     # Check if working dir exists
-    working_dir = os.path.expanduser("~/gigantum")
+    working_dir = os.path.join(os.path.expanduser("~"), "gigantum")
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
 
@@ -148,7 +162,6 @@ def start(tag=None):
         pass
 
     # Start
-    working_dir = os.path.join(os.path.expanduser("~"), "gigantum")
     port_mapping = {'10000/tcp': 10000,
                     '10001/tcp': 10001}
 
@@ -173,15 +186,41 @@ def start(tag=None):
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
         volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
-    docker.client.containers.run(image="gigantum/labmanager:{}".format(tag),
-                                 detach=True,
-                                 name="gigantum-labmanager",
-                                 init=True,
-                                 ports=port_mapping,
-                                 volumes=volume_mapping,
-                                 environment=environment_mapping)
-    print("Starting...")
-    time.sleep(5)
+    container = docker.client.containers.run(image="gigantum/labmanager:{}".format(tag),
+                                             detach=True,
+                                             name="gigantum-labmanager",
+                                             init=True,
+                                             ports=port_mapping,
+                                             volumes=volume_mapping,
+                                             environment=environment_mapping)
+    print("Starting, please wait...")
+    time.sleep(3)
+
+    # Make sure volumes have mounted properly, by checking for the log file for up to 30 seconds
+    success = False
+    for _ in range(30):
+        if os.path.exists(os.path.join(working_dir, '.labmanager', 'logs', 'labmanager.log')):
+            success = True
+            break
+
+        # Sleep for 1 sec and increment counter
+        time.sleep(1)
+
+    if not success:
+        msg = "\n\nWorking directory failed to mount! Have you granted Docker access to your user directory?"
+        msg = msg + " \nIn both Docker for Mac and Docker for Windows this should be shared by default, but may require"
+        msg = msg + " a confirmation from the user."
+        msg = msg + "\n\nRun `gigantum stop`, verify your OS and Docker versions are supported, the allowed Docker"
+        msg = msg + " volume share locations include `{}`, and try again.".format(working_dir)
+        msg = msg + "\n\nIf this problem persists, contact support."
+
+        # Stop and remove the container
+        container.stop()
+        docker.client.api.remove_container(container.id)
+
+        raise ExitCLI(msg)
+
+    # If here, things look OK. Start browser
     webbrowser.open_new("http://localhost:10000")
 
 
