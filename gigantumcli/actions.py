@@ -178,12 +178,12 @@ def start(tag=None):
     if sys.platform.startswith('win') or sys.platform.startswith('cygwin'):
         environment_mapping['WINDOWS_HOST'] = 1
         volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
-        volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
     else:
         environment_mapping['LOCAL_USER_ID'] = os.getuid()
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
-        volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
+
+    volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
     container = docker.client.containers.run(image="gigantum/labmanager:{}".format(tag),
                                              detach=True,
