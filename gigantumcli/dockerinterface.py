@@ -23,7 +23,7 @@ import os
 import docker
 import re
 import subprocess
-import sys
+import platform
 import requests
 from docker.errors import NotFound
 
@@ -59,14 +59,15 @@ class DockerInterface(object):
         Returns:
             str
         """
-        if sys.platform.startswith('linux'):
+        queried_system = platform.system()
+        if queried_system == 'Linux':
             print_cmd = "Docker isn't running. Typically docker runs at startup. Check that `dockerd` is running."
-        elif sys.platform.startswith('darwin'):
+        elif queried_system == 'Darwin':
             print_cmd = "Docker isn't running. Start the Docker for Mac app and try again!"
-        elif (sys.platform.startswith('win')) or (sys.platform.startswith('cygwin')):
+        elif queried_system == 'Windows':
             print_cmd = "Docker isn't running. Start the Docker CE for Windows app and try again!"
         else:
-            raise ValueError("Unsupported OS: {}".format(sys.platform))
+            raise ValueError("Unsupported OS: {}".format(queried_system))
 
         print(print_cmd)
 
@@ -77,7 +78,8 @@ class DockerInterface(object):
         Returns:
             str
         """
-        if sys.platform.startswith('linux'):
+        queried_system = platform.system()
+        if queried_system == 'Linux':
             if ask_question("Docker isn't installed. Would you like to try to install it now?"):
                 installer_path = os.path.expanduser('~/get-docker.sh')
                 resp = requests.get('https://get.docker.com/')
@@ -93,7 +95,7 @@ class DockerInterface(object):
             else:
                 raise ExitCLI("You must install Docker to use the Gigantum application")
 
-        elif sys.platform.startswith('darwin'):
+        elif queried_system == 'Darwin':
             print_cmd = "Docker isn't installed. Get the Docker for Mac app here: "
             print_cmd = "{}\n\n  https://docs.docker.com/docker-for-mac/install/  \n\n".format(print_cmd)
             print_cmd = "{}- Install the `Stable Channel` version.\n".format(print_cmd)
@@ -104,7 +106,7 @@ class DockerInterface(object):
             print_cmd = "{}- You don't need to leave Docker running all the time, but it must be".format(print_cmd)
             print_cmd = "{} running before you start the Gigantum application\n".format(print_cmd)
 
-        elif (sys.platform.startswith('win')) or (sys.platform.startswith('cygwin')):
+        elif queried_system == 'Windows':
             print_cmd = "Docker isn't installed!\n"
             print_cmd = "{}If you have 64bit Windows 10 Pro, install Docker for Windows app here:".format(print_cmd)
             print_cmd = "{}\n\n  https://docs.docker.com/docker-for-windows/install/  \n\n".format(print_cmd)
@@ -118,19 +120,20 @@ class DockerInterface(object):
             print_cmd = "{}\nIf you have an old version of Windows, you can still use Docker Toolbox:".format(print_cmd)
             print_cmd = "{}\n\n  https://docs.docker.com/toolbox/overview/  \n\n".format(print_cmd)
         else:
-            raise ValueError("Unsupported OS: {}".format(sys.platform))
+            raise ValueError("Unsupported OS: {}".format(queried_system))
 
         print(print_cmd)
 
     @staticmethod
     def docker_is_installed():
         """Method to check if docker is installed"""
-        if (sys.platform.startswith('linux')) or (sys.platform.startswith('darwin')):
+        queried_system = platform.system()
+        if queried_system in {'Linux', 'Darwin'}:
             check_cmd = "which"
-        elif (sys.platform.startswith('win')) or (sys.platform.startswith('cygwin')):
+        elif queried_system == 'Windows':
             check_cmd = "where"
         else:
-            raise ValueError("Unsupported OS: {}".format(sys.platform))
+            raise ValueError("Unsupported OS: {}".format(queried_system))
 
         try:
             subprocess.check_output([check_cmd, 'docker'])

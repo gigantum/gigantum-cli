@@ -18,11 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import sys
+import platform
 from docker.errors import APIError, ImageNotFound, NotFound
 import os
 import webbrowser
 import time
-import getpass
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
@@ -175,7 +175,7 @@ def start(tag=None):
     # windows docker has the following eccentricities
     #    no user ids
     #    /C/a/b/ format for volume C:\\a\\b
-    if sys.platform.startswith('win') or sys.platform.startswith('cygwin'):
+    if platform.system() == 'Windows':
         environment_mapping['WINDOWS_HOST'] = 1
         volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
 
