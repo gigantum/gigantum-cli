@@ -172,14 +172,13 @@ def start(tag=None):
     environment_mapping = {'HOST_WORK_DIR': working_dir}
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
-    # windows docker has several eccentricities
+    # windows docker has the following eccentricities
     #    no user ids
-    #    //var for the socker mapping
-    #    //C/a/b/ format for volume C:\\a\\b
+    #    /C/a/b/ format for volume C:\\a\\b
     if sys.platform.startswith('win') or sys.platform.startswith('cygwin'):
         environment_mapping['WINDOWS_HOST'] = 1
         volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
-        volume_mapping['//var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
+        volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
     else:
         environment_mapping['LOCAL_USER_ID'] = os.getuid()

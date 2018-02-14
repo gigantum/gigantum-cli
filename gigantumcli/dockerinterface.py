@@ -178,7 +178,7 @@ class DockerInterface(object):
     def dockerize_volume_path(volpath):
         """Returns a path that can be mounted as a docker volume on windows
             Docker uses non-standard formats for windows mounts.
-            This routine converts C:\\a\\b -> //C/a/b on windows and does
+            This routine converts C:\\a\\b -> /C/a/b on windows and does
             nothing on posix systems.
 
         Args:
@@ -191,7 +191,7 @@ class DockerInterface(object):
         # detect if it's a volume path and rewrite the string.
         if os.path.__name__ == 'ntpath':
             # for windows switch the slashes and then sub the drive letter
-            return re.sub('(^[A-Z]):(.*$)', '//\g<1>\g<2>', volpath.replace('\\', '/'))
+            return re.sub('(^[A-Z]):(.*$)', '/\g<1>\g<2>', volpath.replace('\\', '/'))
         else:
             return volpath
 
