@@ -29,8 +29,14 @@ from gigantumcli.changelog import ChangeLog
 from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
 
 
-def install():
-    """Method to install the Gigantum Image"""
+def install(image_name):
+    """Method to install the Gigantum Image
+
+    Args:
+        image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
+
+
+    """
     # Make sure user is not root
     if is_running_as_admin():
         raise ExitCLI("Do not run `gigantum install` as root.")
@@ -40,30 +46,31 @@ def install():
     try:
         try:
             # Check to see if the image has already been pulled
-            docker.client.images.get('gigantum/labmanager')
+            docker.client.images.get(image_name)
             raise ExitCLI("** Application already installed. Run `gigantum update` instead.")
 
         except ImageNotFound:
             # Pull for the first time
             print("\nDownloading and installing the Gigantum Docker Image. Please wait...\n")
-            image = docker.client.images.pull('gigantum/labmanager', 'latest')
+            image = docker.client.images.pull(image_name, 'latest')
 
     except APIError:
         msg = "ERROR: failed to pull image!"
         msg += "\n- Are you signed into DockerHub?"
-        msg += "\n- Do you have access to gigantum/labmanager? If not, contact Gigantum."
+        msg += "\n- Do you have access to {}? If not, contact Gigantum.".format(image_name)
         msg += "\n    - Can test by going here: https://hub.docker.com/r/gigantum/labmanager/"
-        msg += "\n    - If you see `404 Not Found`, request access\n"
+        msg += "\n    - If you see `404 Not Found`, request access from Gigantum\n"
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
-    print("\nSuccessfully pulled gigantum/labmanager:{}\n".format(short_id))
+    print("\nSuccessfully pulled {}:{}\n".format(image_name, short_id))
 
 
-def update(tag=None):
+def update(image_name, tag=None):
     """Method to update the existing image, warning about changes before accepting
 
     Args:
+        image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
         tag(str): Tag to pull if you wish to override `latest`
 
     Returns:
@@ -77,57 +84,65 @@ def update(tag=None):
 
     try:
         cl = ChangeLog()
-        if not tag:
-            # Trying to update to the latest version
-            tag = 'latest'
+        if "edge" not in image_name:
+            # Normal install, so do checks
+            if not tag:
+                # Trying to update to the latest version
+                tag = 'latest'
 
-            # Get id of current labmanager install
+                # Get id of current labmanager install
+                try:
+                    current_image = docker.client.images.get("{}:latest".format(image_name))
+                except ImageNotFound:
+                    raise ExitCLI("Gigantum Image not yet installed. Run 'gigantum install' first.")
+                short_id = current_image.short_id.split(':')[1]
+
+                # Check if there is an update available
+                if not cl.is_update_available(short_id):
+                    print("Latest version already installed.")
+                    sys.exit(0)
+
+            # Get Changelog info for the latest or specified version
             try:
-                current_image = docker.client.images.get("gigantum/labmanager:latest")
-            except ImageNotFound:
-                raise ExitCLI("Gigantum Image not yet installed. Run 'gigantum install' first.")
-            short_id = current_image.short_id.split(':')[1]
-
-            # Check if there is an update available
-            if not cl.is_update_available(short_id):
-                print("Latest version already installed.")
-                sys.exit(0)
-
-        # Get Changelog info for the latest or specified version
-        try:
-            print(cl.get_changelog(tag))
-        except ValueError as err:
-            raise ExitCLI(err)
+                print(cl.get_changelog(tag))
+            except ValueError as err:
+                raise ExitCLI(err)
+        else:
+            # Edge build, set tag if needed
+            if not tag:
+                # Trying to update to the latest version
+                tag = 'latest'
 
         # Make sure user wants to pull
         if ask_question("Are you sure you want to update?"):
             # Pull
             print("\nDownloading and installing the Gigantum Docker Image. Please wait...\n")
-            image = docker.client.images.pull('gigantum/labmanager', tag)
+            image = docker.client.images.pull(image_name, tag)
 
             # If pulling not truly latest, force to latest
             if tag != 'latest':
                 print("Tagging explicit version {} with latest".format(tag))
-                docker.client.api.tag('gigantum/labmanager:{}'.format(tag), 'gigantum/labmanager', 'latest')
+                docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
         else:
             raise ExitCLI("Update cancelled")
     except APIError:
         msg = "ERROR: failed to pull image!"
         msg += "\n- Are you signed into DockerHub?"
-        msg += "\n- Do you have access to gigantum/labmanager? If not, contact Gigantum."
+        msg += "\n- Do you have access to {}? If not, contact Gigantum.".format(image_name)
         msg += "\n    - Can test by going here: https://hub.docker.com/r/gigantum/labmanager/"
         msg += "\n    - If you see `404 Not Found`, request access\n"
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
-    print("\nSuccessfully pulled gigantum/labmanager:{}\n".format(short_id))
+    print("\nSuccessfully pulled {}:{}\n".format(short_id, image_name))
 
 
-def start(tag=None):
+def start(image_name, tag=None):
     """Method to start the application
 
     Args:
         tag(str): Tag to run, defaults to latest
+        image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
 
     Returns:
         None 
@@ -135,6 +150,10 @@ def start(tag=None):
     print("Verifying Docker is available...")
     # Check if Docker is running
     docker = DockerInterface()
+
+    if not tag:
+        # Trying to update to the latest version
+        tag = 'latest'
 
     # Make sure user is not root
     if is_running_as_admin():
@@ -145,18 +164,15 @@ def start(tag=None):
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
 
-    if not tag:
-        tag = "latest"
-
     # Check if application has been installed
     try:
-        docker.client.images.get("gigantum/labmanager:latest")
+        docker.client.images.get("{}:{}".format(image_name, tag))
     except ImageNotFound:
         raise ExitCLI("Application not found. Did you run `gigantum install` yet?")
 
     # Check to see if already running
     try:
-        docker.client.containers.get("gigantum-labmanager")
+        docker.client.containers.get(image_name.replace("/", "-"))
         raise ExitCLI("Application already running on http://localhost:10000")
     except NotFound:
         pass
@@ -185,9 +201,9 @@ def start(tag=None):
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
-    container = docker.client.containers.run(image="gigantum/labmanager:{}".format(tag),
+    container = docker.client.containers.run(image="{}:{}".format(image_name, tag),
                                              detach=True,
-                                             name="gigantum-labmanager",
+                                             name=image_name.replace("/", "-"),
                                              init=True,
                                              ports=port_mapping,
                                              volumes=volume_mapping,
