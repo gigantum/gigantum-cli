@@ -18,11 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import sys
+import platform
 from docker.errors import APIError, ImageNotFound, NotFound
 import os
 import webbrowser
 import time
-import getpass
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
@@ -172,19 +172,18 @@ def start(tag=None):
     environment_mapping = {'HOST_WORK_DIR': working_dir}
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
-    # windows docker has several eccentricities
+    # windows docker has the following eccentricities
     #    no user ids
-    #    //var for the socker mapping
-    #    //C/a/b/ format for volume C:\\a\\b
-    if sys.platform.startswith('win') or sys.platform.startswith('cygwin'):
+    #    /C/a/b/ format for volume C:\\a\\b
+    if platform.system() == 'Windows':
         environment_mapping['WINDOWS_HOST'] = 1
         volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
-        volume_mapping['//var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
     else:
         environment_mapping['LOCAL_USER_ID'] = os.getuid()
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
-        volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
+
+    volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
     container = docker.client.containers.run(image="gigantum/labmanager:{}".format(tag),
                                              detach=True,
