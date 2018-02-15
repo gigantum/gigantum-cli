@@ -45,17 +45,27 @@ def main():
                         default=None,
                         metavar="<tag>",
                         help="Image Tag to override the 'latest' Docker Image when updating")
+
+    parser.add_argument("--edge", "-e",
+                        action='store_true',
+                        help="Optional flag indicating if the edge version should be used."
+                             " Applicable to install, update, and start commands")
     parser.add_argument("action", help="Action to perform")
 
     args = parser.parse_args()
 
+    if not args.edge:
+        image_name = 'gigantum/labmanager'
+    else:
+        image_name = 'gigantum/labmanager-edge'
+
     try:
         if args.action == "install":
-            install()
+            install(image_name)
         elif args.action == "update":
-            update(args.tag)
+            update(image_name, args.tag)
         elif args.action == "start":
-            start(args.tag)
+            start(image_name, args.tag)
         elif args.action == "stop":
             stop()
         elif args.action == "feedback":
