@@ -185,18 +185,19 @@ def start(image_name, tag=None):
     if not docker.share_volume_exists():
         docker.create_share_volume()
 
-    environment_mapping = {'HOST_WORK_DIR': working_dir}
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
     # windows docker has the following eccentricities
     #    no user ids
     #    /C/a/b/ format for volume C:\\a\\b
     if platform.system() == 'Windows':
-        environment_mapping['WINDOWS_HOST'] = 1
+        environment_mapping = {'HOST_WORK_DIR': docker.dockerize_volume_path(working_dir),
+                               'WINDOWS_HOST': 1}
         volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
 
     else:
-        environment_mapping['LOCAL_USER_ID'] = os.getuid()
+        environment_mapping = {'HOST_WORK_DIR': working_dir,
+                               'LOCAL_USER_ID':  os.getuid()}
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
