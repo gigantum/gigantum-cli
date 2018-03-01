@@ -23,6 +23,7 @@ from docker.errors import APIError, ImageNotFound, NotFound
 import os
 import webbrowser
 import time
+import requests
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
@@ -137,6 +138,37 @@ def update(image_name, tag=None):
     print("\nSuccessfully pulled {}:{}\n".format(short_id, image_name))
 
 
+def _check_for_api(launch_browser=False, timeout=5):
+    """Helper method to check for the API to be live for up to 15 seconds and then optionally launch a browser window
+
+    Args:
+        launch_browser(bool): flag indicating if the browser should be launched on success == True
+        timeout(int): Number of seconds to wait for the API before returning
+    Returns:
+        bool: flag indicating if the API is ready
+    """
+    success = False
+    for _ in range(timeout * 2):
+        try:
+            resp = requests.get("http://localhost:10001/ping")
+
+            if resp.status_code == 200:
+                success = True
+                break
+        except requests.exceptions.ConnectionError:
+            # allow connection errors, which mean the API isn't up yet.
+            pass
+
+        # Sleep for 1 sec and increment counter
+        time.sleep(.5)
+
+    if success is True and launch_browser is True:
+        # If here, things look OK. Start browser
+        webbrowser.open_new("http://localhost:10000")
+
+    return success
+
+
 def start(image_name, tag=None):
     """Method to start the application
 
@@ -172,9 +204,20 @@ def start(image_name, tag=None):
 
     # Check to see if already running
     try:
-        docker.client.containers.get(image_name.replace("/", "-"))
-        raise ExitCLI("Application already running on http://localhost:10000")
+        if _check_for_api(launch_browser=False, timeout=1):
+            print("Application already running on http://localhost:10000")
+            _check_for_api(launch_browser=True)
+            raise ExitCLI("If app does not load in your browser, run `gigantum stop` and then `gigantum start`")
+
+        # Check to see if the container already exists
+        old_container = docker.client.containers.get(image_name.replace("/", "-"))
+
+        # if here it does, so for now remove the old container so you can relaunch
+        old_container.stop()
+        old_container.remove()
+
     except NotFound:
+        # If here, the API isn't running and an older container isn't lingering, so just move along.
         pass
 
     # Start
@@ -210,7 +253,7 @@ def start(image_name, tag=None):
                                              volumes=volume_mapping,
                                              environment=environment_mapping)
     print("Starting, please wait...")
-    time.sleep(3)
+    time.sleep(1)
 
     # Make sure volumes have mounted properly, by checking for the log file for up to 30 seconds
     success = False
@@ -232,12 +275,19 @@ def start(image_name, tag=None):
 
         # Stop and remove the container
         container.stop()
-        docker.client.api.remove_container(container.id)
+        container.remove()
 
         raise ExitCLI(msg)
 
-    # If here, things look OK. Start browser
-    webbrowser.open_new("http://localhost:10000")
+    # Wait for API to be live before opening the user's browser
+    if not _check_for_api(launch_browser=True):
+        msg = "\n\nGigantum client failed to start! Try restarting Docker and then start again."
+
+        # Stop and remove the container
+        container.stop()
+        container.remove()
+
+        raise ExitCLI(msg)
 
 
 def stop():
@@ -246,14 +296,26 @@ def stop():
     Returns:
         None
     """
-    if ask_question("Stop all containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!"):
+    if ask_question("Stop all Gigantum managed containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!"):
         docker = DockerInterface()
 
+        # Stop any labbook containers
         for container in docker.client.containers.list():
-            print('- stopping {}'.format(container.short_id))
-            container.stop()
+            if "gmlb-" in container.name:
+                _, user, owner, labbook_name = container.name.split('-', 3)
+                print('- Stopping container for LabBook: {}'.format(labbook_name))
+                container.stop()
+                container.remove()
 
-        docker.client.containers.prune()
+        # Stop app container
+        try:
+            app_container = docker.client.containers.get("gigantum-labmanager")
+
+            print('- Stopping Gigantum app container')
+            app_container.stop()
+            app_container.remove()
+        except NotFound:
+            pass
     else:
         raise ExitCLI("Stop command cancelled")
 
