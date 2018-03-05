@@ -15,7 +15,8 @@ If you encounter any issues or have any questions, do not hesitate in contacting
 
 1. **Python**
 
-    This tool requires that you have Python installed on your system. It works with Python 2.7 and 3.4+. 
+    This tool requires that you have Python and [pip](https://pip.pypa.io/en/stable/installing/) installed on your
+    system. It works with Python 2.7 and 3.4+.
     
 2. **Docker**
 
@@ -86,9 +87,9 @@ If you encounter any issues or have any questions, do not hesitate in contacting
 
 This package is available for install via `pip`. It runs on Python 2 and 3 and supports Windows, OSX and Linux. 
 
-1. To isolate this package from your system Python, it is often best to create a virtual environment first.
+1. (Optional) To isolate this package from your system Python, it is often best to create a virtual environment first.
 This is not required, but recommended if you feel comfortable enough with Python. The Gigantum CLI installs a minimal set of 
-Python dependencies, so in general it should be safe to simply install if preferred.
+Python dependencies, so in general it should be safe to just install if preferred.
 
 	Using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/):
 	
@@ -99,7 +100,6 @@ Python dependencies, so in general it should be safe to simply install if prefer
 2. Install Gigantum CLI
 	
 	```
-	workon gigantum
 	pip install -U gigantum
 	```
     
