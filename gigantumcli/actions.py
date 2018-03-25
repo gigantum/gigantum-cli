@@ -163,6 +163,7 @@ def _check_for_api(launch_browser=False, timeout=5):
         time.sleep(.5)
 
     if success is True and launch_browser is True:
+        time.sleep(2)
         # If here, things look OK. Start browser
         webbrowser.open_new("http://localhost:10000")
 
@@ -215,6 +216,9 @@ def start(image_name, tag=None):
         # if here it does, so for now remove the old container so you can relaunch
         old_container.stop()
         old_container.remove()
+
+        # Do a container prune to make sure things are cleaned up
+        docker.client.containers.prune()
 
     except NotFound:
         # If here, the API isn't running and an older container isn't lingering, so just move along.
@@ -280,7 +284,7 @@ def start(image_name, tag=None):
         raise ExitCLI(msg)
 
     # Wait for API to be live before opening the user's browser
-    if not _check_for_api(launch_browser=True):
+    if not _check_for_api(launch_browser=True, timeout=15):
         msg = "\n\nGigantum client failed to start! Try restarting Docker and then start again."
 
         # Stop and remove the container
@@ -309,6 +313,15 @@ def stop():
 
         # Stop app container
         try:
+            app_container = docker.client.containers.get("gigantum-labmanager-edge")
+
+            print('- Stopping Gigantum app container')
+            app_container.stop()
+            app_container.remove()
+        except NotFound:
+            pass
+
+        try:
             app_container = docker.client.containers.get("gigantum-labmanager")
 
             print('- Stopping Gigantum app container')
@@ -316,6 +329,9 @@ def stop():
             app_container.remove()
         except NotFound:
             pass
+
+        # Do a container prune to make sure things are cleaned up
+        docker.client.containers.prune()
     else:
         raise ExitCLI("Stop command cancelled")
 
@@ -326,6 +342,6 @@ def feedback():
     Returns:
         None
     """
-    feedback_url = "https://app.craft.io/share/C3174F4B2305843009657781316"
+    feedback_url = "https://docs.gigantum.io/discuss"
     print("You can provide feedback here: {}".format(feedback_url))
     webbrowser.open_new(feedback_url)
