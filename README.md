@@ -7,9 +7,11 @@ Simple user-facing command line interface (CLI) for installing and running the G
 This Python package is provided as a method to install and run the Gigantum application, locally on your computer. It provides a
 simple command line interface to install, update, start, and stop the application. 
 
-**Currently this is package only targeting alpha testers and not generally available yet. You must be granted access to the Gigantum Docker Image to install locally**
+**Currently, you must be part of the Gigantum Beta to log into the app. You can sign up [here](http://gigantum.io/#sign-up)**
 
-If you encounter any issues or have any questions, do not hesitate in contacting Gigantum for help. 
+More detailed install instructions can be found at the Gigantum [docs site](https://docs.gigantum.io/docs)
+
+If you encounter any issues or have any questions or comments, please leave a message on our [discussion board](https://docs.gigantum.io/discuss) 
 
 ## Prerequisites
 
@@ -28,7 +30,6 @@ If you encounter any issues or have any questions, do not hesitate in contacting
     Docker [website](https://www.docker.com/community-edition#/download)
     
     - Windows:
-        - **NOTE: Windows is only partially supported. Additional testing is still required due to recent changes with Docker on Windows**
         - Requires Microsoft Windows 10 Professional or Enterprise 64-bit
         - Requires Docker CE Stable
         - [https://store.docker.com/editions/community/docker-ce-desktop-windows](https://store.docker.com/editions/community/docker-ce-desktop-windows)
@@ -66,20 +67,9 @@ If you encounter any issues or have any questions, do not hesitate in contacting
                 for more information.
                 ```
     
-3. **Sign-In to DockerHub**
-
-    Since the Gigantum application is still a closed alpha, you must be granted access to the Docker image. To do so, 
-    first create a free DockerHub account at [https://hub.docker.com/](https://hub.docker.com/) and **send your username to Gigantum**.
-    
-    - Start your Docker application. 
-    - Open the Docker menu by clicking on the app icon in your system tray or taskbar. 
-    - Click on Sign-In in the Docker menu, and enter your DockerHub credentials.
-    
-    ![sign in](docs/img/docker-signin.png)
-    
 3. **(Optional) Adjust Docker Resources**
 	
-	You can configure the amount of CPU and RAM allocated to Docker by clicking on `Preferences > Advanced` from the Docker Menu. Docker will use *up to* the amount specified when operating. 
+	You can configure the amount of CPU and RAM allocated to Docker by clicking on `Preferences > Advanced` from the Docker Menu. Docker will use up to the amount specified when operating. 
 
 	![preferences](docs/img/resources.png)
            
@@ -112,7 +102,7 @@ the Gigantum CLI is installed as a globally available script called `gigantum`.
 Usage of the CLI then becomes:
 
 ```
-> gigantum [-h] [--tag <tag>] action
+gigantum [-h] [--tag <tag>] action
 ```
 
 #### Actions
@@ -135,10 +125,10 @@ Usage of the CLI then becomes:
     - **Once you create your first LabBook, check your Gigantum working directory for LabBook to make sure everything is configured properly. See the `Gigantum Working Directory` section for more details.**
     
 - `stop`
-    - This command currently stops the Gigantum Application and *ALL* Docker containers on your computer
+    - This command currently stops and removes all Gigantum managed Docker containers and performs a container prune operation.
     
 - `feedback`
-    - This command opens a browser to a feedback form where you can report bugs, suggestions, desired features, etc.
+    - This command opens a browser to discussion board where you can report bugs, suggestions, desired features, etc.
     
 ## Usage
 
@@ -181,10 +171,13 @@ As an example, if the user `sarah` created 1 LabBook and downloaded 1 LabBook fr
         
 ### User Account
 To use the Gigantum application you must have a Gigantum user account. When you run the application for the first time you can register. 
+You must have been invited to the Gigantum Beta to log in.
 
-Note that you'll get an extra warning about granting the application access to your account when you sign in for the first time. This is an extra security measure that occurs because the app is running on localhost and not a verified domain. This is expected.
+Note that you'll get an extra warning about granting the application access to your account when you sign in for the first time.
+This is an extra security measure that occurs because the app is running on localhost and not a verified domain. This is expected.
 
-Once you login, your user identity is cached locally. This lets you run the application when disconnected from the internet and without logging in again. If you logout, you will not be able to use the application again until you have internet access and can re-authenticate.
+Once you login, your user identity is cached locally. This lets you run the application when disconnected from the internet and without 
+needing to log in again. If you logout, you will not be able to use the application again until you have internet access and can re-authenticate.
 
 ### Typical Work Flow
 
@@ -212,40 +205,8 @@ After everything is installed, a typical usage would follow a workflow like this
 - If desired, quit the Docker app
 
 
-
-### Sharing 
-
-There are two ways to share LabBooks; export/import and remote repository-based sharing. 
-
-### Export/Import
-To export a LabBook, click on the the Export button in the LabBook Overview page.
-
-This will download a `.lbk` archive file to the `export` directory in your Gigantum working directory. 
-You can then share this file with someone else or archive it.
-
-To import, simply drag-and-drop the `.lbk` file into the Import area in the LabBook Overview page. 
-
-Note that if the file is large, import can take a little while. Also, importing a LabBook detaches it from the source,
-so it will always import into the currently logged in user's namespace.
-
-You cannot duplicate LabBooks. If you want to import a LabBook "on top" of an existing LabBook, currently you'll 
-have to rename the original LabBook before Import.
-
-### Sharing via remote repository
-Currently, only sharing to the Gigantum cloud is supported.
-
-To share via a remote repository, simply click the "publish" button in the LabBook action menu, located in the top right
-corner of an opened LabBook. Once published, you'll receive a link that you can share with other users.
-
-By default all LabBooks are private. Click on the `collaborators` button in the LabBook action menu. Enter the Gigantum
-username of any users you wish to collaborate with. They can then enter the link returned by the publish operation into
-the new LabBook wizard to download and open your LabBook.
-    
-
 ## Providing Feedback
 
 If you encounter any issues using the Gigantum CLI, submit them to this [GitHub repository issues page](https://github.com/gigantum/gigantum-cli/issues).
 
-If you encounter any issues or have any feedback while using the the Gigantum Application, use the `gigantum feedback` command to open the feedback form.
-
-For urgent issues, contact Gigantum.
+If you encounter any issues or have any feedback while using the the Gigantum Application, use the `gigantum feedback` command to open the discussion board.
