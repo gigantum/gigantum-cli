@@ -27,7 +27,7 @@ setup(
     install_requires=install_requires,
 
     author='Gigantum/FlashX, LLC',
-    author_email='hello@gigantum.io',
+    author_email='hello@gigantum.com',
 
     entry_points={
         'console_scripts': ['gigantum=gigantumcli.cli:main'],
