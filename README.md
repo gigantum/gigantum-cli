@@ -7,11 +7,9 @@ Simple user-facing command line interface (CLI) for installing and running the G
 This Python package is provided as a method to install and run the Gigantum application, locally on your computer. It provides a
 simple command line interface to install, update, start, and stop the application. 
 
-**Currently, you must be part of the Gigantum Beta to log into the app. You can sign up [here](http://gigantum.io/#sign-up)**
+More detailed install instructions can be found at the Gigantum [docs site](https://docs.gigantum.com/docs)
 
-More detailed install instructions can be found at the Gigantum [docs site](https://docs.gigantum.io/docs)
-
-If you encounter any issues or have any questions or comments, please leave a message on our [discussion board](https://docs.gigantum.io/discuss) 
+If you encounter any issues or have any questions or comments, please leave a message on our [discussion board](https://docs.gigantum.com/discuss) 
 
 ## Prerequisites
 

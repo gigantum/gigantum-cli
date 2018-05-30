@@ -342,6 +342,6 @@ def feedback():
     Returns:
         None
     """
-    feedback_url = "https://docs.gigantum.io/discuss"
+    feedback_url = "https://docs.gigantum.com/discuss"
     print("You can provide feedback here: {}".format(feedback_url))
     webbrowser.open_new(feedback_url)
