@@ -150,7 +150,7 @@ def _check_for_api(launch_browser=False, timeout=5):
     success = False
     for _ in range(timeout * 2):
         try:
-            resp = requests.get("http://localhost:10000/api/ping")
+            resp = requests.get("http://localhost:80/api/ping")
 
             if resp.status_code == 200:
                 success = True
@@ -165,7 +165,7 @@ def _check_for_api(launch_browser=False, timeout=5):
     if success is True and launch_browser is True:
         time.sleep(2)
         # If here, things look OK. Start browser
-        webbrowser.open_new("http://localhost:10000")
+        webbrowser.open_new("http://localhost")
 
     return success
 
@@ -206,7 +206,7 @@ def start(image_name, tag=None):
     # Check to see if already running
     try:
         if _check_for_api(launch_browser=False, timeout=1):
-            print("Application already running on http://localhost:10000")
+            print("Application already running on http://localhost:80")
             _check_for_api(launch_browser=True)
             raise ExitCLI("If app does not load in your browser, run `gigantum stop` and then `gigantum start`")
 
