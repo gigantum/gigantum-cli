@@ -225,7 +225,7 @@ def start(image_name, tag=None):
         pass
 
     # Start
-    port_mapping = {'10000/tcp': 80,
+    port_mapping = {'80/tcp': 80,
                     '10001/tcp': 10001,
                     '10002/tcp': 10002}
 
