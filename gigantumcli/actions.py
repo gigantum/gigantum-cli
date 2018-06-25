@@ -225,7 +225,9 @@ def start(image_name, tag=None):
         pass
 
     # Start
-    port_mapping = {'80/tcp': 80}
+    port_mapping = {'80/tcp': 80,
+                    '10001/tcp': 10000,
+                    '10002/tcp': 10002}
 
     # Make sure the container-container share volume exists
     if not docker.share_volume_exists():
