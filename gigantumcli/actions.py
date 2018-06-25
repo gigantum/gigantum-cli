@@ -150,7 +150,7 @@ def _check_for_api(launch_browser=False, timeout=5):
     success = False
     for _ in range(timeout * 2):
         try:
-            resp = requests.get("http://localhost:80/api/ping")
+            resp = requests.get("http://localhost/api/ping")
 
             if resp.status_code == 200:
                 success = True
@@ -283,7 +283,7 @@ def start(image_name, tag=None):
         raise ExitCLI(msg)
 
     # Wait for API to be live before opening the user's browser
-    if not _check_for_api(launch_browser=True, timeout=15):
+    if not _check_for_api(launch_browser=False, timeout=25):
         msg = "\n\nGigantum client failed to start! Try restarting Docker and then start again."
 
         # Stop and remove the container
