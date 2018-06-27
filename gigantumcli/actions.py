@@ -150,7 +150,7 @@ def _check_for_api(launch_browser=False, timeout=5):
     success = False
     for _ in range(timeout * 2):
         try:
-            resp = requests.get("http://localhost:10001/ping")
+            resp = requests.get("http://localhost:10000/api/ping")
 
             if resp.status_code == 200:
                 success = True
@@ -225,8 +225,7 @@ def start(image_name, tag=None):
         pass
 
     # Start
-    port_mapping = {'10000/tcp': 10000,
-                    '10001/tcp': 10001}
+    port_mapping = {'10000/tcp': 10000}
 
     # Make sure the container-container share volume exists
     if not docker.share_volume_exists():
