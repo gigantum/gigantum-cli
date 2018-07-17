@@ -233,18 +233,23 @@ def start(image_name, tag=None):
 
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
-    # windows docker has the following eccentricities
-    #    no user ids
-    #    /C/a/b/ format for volume C:\\a\\b
     if platform.system() == 'Windows':
+        # windows docker has the following eccentricities
+        # no user ids, WINDOWS_HOST env var, /C/a/b/ format for volume C:\\a\\b
         environment_mapping = {'HOST_WORK_DIR': docker.dockerize_volume_path(working_dir),
                                'WINDOWS_HOST': 1}
-        volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
+        volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
-    else:
+    elif platform.system() == 'Darwin':
+        # For macOS, use the cached mode for improved performance
         environment_mapping = {'HOST_WORK_DIR': working_dir,
                                'LOCAL_USER_ID':  os.getuid()}
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
+    else:
+        # For anything else, just use default mode.
+        environment_mapping = {'HOST_WORK_DIR': working_dir,
+                               'LOCAL_USER_ID':  os.getuid()}
+        volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
