@@ -255,7 +255,7 @@ def start(image_name, tag=None):
 
     container = docker.client.containers.run(image="{}:{}".format(image_name, tag),
                                              detach=True,
-                                             name=image_name.replace("/", "-"),
+                                             name=image_name.replace("/", "."),
                                              init=True,
                                              ports=port_mapping,
                                              volumes=volume_mapping,
@@ -317,7 +317,7 @@ def stop():
 
         # Stop app container
         try:
-            app_container = docker.client.containers.get("gigantum-labmanager-edge")
+            app_container = docker.client.containers.get("gigantum.labmanager-edge")
 
             print('- Stopping Gigantum app container')
             app_container.stop()
@@ -326,7 +326,7 @@ def stop():
             pass
 
         try:
-            app_container = docker.client.containers.get("gigantum-labmanager")
+            app_container = docker.client.containers.get("gigantum.labmanager")
 
             print('- Stopping Gigantum app container')
             app_container.stop()
