@@ -24,6 +24,7 @@ import os
 import webbrowser
 import time
 import requests
+import uuid
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
@@ -147,10 +148,11 @@ def _check_for_api(launch_browser=False, timeout=5):
     Returns:
         bool: flag indicating if the API is ready
     """
+    time.sleep(1)
     success = False
-    for _ in range(timeout * 2):
+    for _ in range(timeout):
         try:
-            resp = requests.get("http://localhost:10000/api/ping")
+            resp = requests.get("http://localhost:10000/api/ping?v={}".format(uuid.uuid4().hex))
 
             if resp.status_code == 200:
                 success = True
@@ -160,7 +162,7 @@ def _check_for_api(launch_browser=False, timeout=5):
             pass
 
         # Sleep for 1 sec and increment counter
-        time.sleep(.5)
+        time.sleep(1)
 
     if success is True and launch_browser is True:
         time.sleep(2)
