@@ -24,6 +24,7 @@ import os
 import webbrowser
 import time
 import requests
+import uuid
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
@@ -147,10 +148,11 @@ def _check_for_api(launch_browser=False, timeout=5):
     Returns:
         bool: flag indicating if the API is ready
     """
+    time.sleep(1)
     success = False
-    for _ in range(timeout * 2):
+    for _ in range(timeout):
         try:
-            resp = requests.get("http://localhost:80/api/ping")
+            resp = requests.get("http://localhost:80/api/ping?v={}".format(uuid.uuid4().hex))
 
             if resp.status_code == 200:
                 success = True
@@ -160,7 +162,7 @@ def _check_for_api(launch_browser=False, timeout=5):
             pass
 
         # Sleep for 1 sec and increment counter
-        time.sleep(.5)
+        time.sleep(1)
 
     if success is True and launch_browser is True:
         time.sleep(2)
@@ -178,7 +180,7 @@ def start(image_name, tag=None):
         image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
 
     Returns:
-        None 
+        None
     """
     print("Verifying Docker is available...")
     # Check if Docker is running
@@ -235,24 +237,29 @@ def start(image_name, tag=None):
 
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
-    # windows docker has the following eccentricities
-    #    no user ids
-    #    /C/a/b/ format for volume C:\\a\\b
     if platform.system() == 'Windows':
+        # windows docker has the following eccentricities
+        # no user ids, WINDOWS_HOST env var, /C/a/b/ format for volume C:\\a\\b
         environment_mapping = {'HOST_WORK_DIR': docker.dockerize_volume_path(working_dir),
                                'WINDOWS_HOST': 1}
-        volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
+        volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
-    else:
+    elif platform.system() == 'Darwin':
+        # For macOS, use the cached mode for improved performance
         environment_mapping = {'HOST_WORK_DIR': working_dir,
                                'LOCAL_USER_ID':  os.getuid()}
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'cached'}
+    else:
+        # For anything else, just use default mode.
+        environment_mapping = {'HOST_WORK_DIR': working_dir,
+                               'LOCAL_USER_ID':  os.getuid()}
+        volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
     container = docker.client.containers.run(image="{}:{}".format(image_name, tag),
                                              detach=True,
-                                             name=image_name.replace("/", "-"),
+                                             name=image_name.replace("/", "."),
                                              init=True,
                                              ports=port_mapping,
                                              volumes=volume_mapping,
@@ -314,7 +321,7 @@ def stop():
 
         # Stop app container
         try:
-            app_container = docker.client.containers.get("gigantum-labmanager-edge")
+            app_container = docker.client.containers.get("gigantum.labmanager-edge")
 
             print('- Stopping Gigantum app container')
             app_container.stop()
@@ -323,7 +330,7 @@ def stop():
             pass
 
         try:
-            app_container = docker.client.containers.get("gigantum-labmanager")
+            app_container = docker.client.containers.get("gigantum.labmanager")
 
             print('- Stopping Gigantum app container')
             app_container.stop()
