@@ -1,6 +1,7 @@
 ## Gigantum CLI
 
 [![PyPI version](https://badge.fury.io/py/gigantum.svg)](https://badge.fury.io/py/gigantum)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgigantum%2Fgigantum-cli.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgigantum%2Fgigantum-cli?ref=badge_shield)
 
 Simple user-facing command line interface (CLI) for installing and running the
 Gigantum application locally
@@ -281,3 +282,7 @@ repository](https://github.com/gigantum/gtm/tree/integration/docs/contributing.m
 ## Credits
 
 TODO
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgigantum%2Fgigantum-cli.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgigantum%2Fgigantum-cli?ref=badge_large)
