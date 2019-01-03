@@ -1,4 +1,4 @@
-# Copyright (c) 2017 FlashX, LLC
+# Copyright (c) 2018 FlashX, LLC
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,4 +19,4 @@
 # SOFTWARE.
 
 # Gigantum CLI Version
-__version__ = "0.13"
+__version__ = "0.14"
