@@ -85,7 +85,7 @@ def install(image_name):
         try:
             # Check to see if the image has already been pulled
             docker.client.images.get(image_name)
-            raise ExitCLI("** Gigantum Client already installed. Run `gigantum update` instead.")
+            raise ExitCLI("** Gigantum Client image already installed. Run `gigantum update` instead.")
 
         except ImageNotFound:
             # Pull for the first time
@@ -132,7 +132,7 @@ def update(image_name, tag=None):
                 try:
                     current_image = docker.client.images.get("{}:latest".format(image_name))
                 except ImageNotFound:
-                    raise ExitCLI("Gigantum Client not yet installed. Run 'gigantum install' first.")
+                    raise ExitCLI("Gigantum Client image not yet installed. Run 'gigantum install' first.")
                 short_id = current_image.short_id.split(':')[1]
 
                 # Check if there is an update available
@@ -239,7 +239,7 @@ def start(image_name, tag=None):
     try:
         docker.client.images.get("{}:{}".format(image_name, tag))
     except ImageNotFound:
-        raise ExitCLI("Gigantum Client container not found. Did you run `gigantum install` yet?")
+        raise ExitCLI("Gigantum Client image not found. Did you run `gigantum install` yet?")
 
     # Check to see if already running
     try:
