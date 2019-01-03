@@ -34,6 +34,8 @@ from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
 def _cleanup_containers() -> None:
     """Method to clean up gigantum managed containers, stopping if needed.
 
+    Note: this method is the only place removal of containers should occur
+
     Returns:
         None
     """
