@@ -24,18 +24,18 @@ import sys
 
 def main():
     # Setup supported components and commands
-    actions = {"install": "Install the Gigantum application Docker Image",
-               "update": "Update the Gigantum application Docker Image",
-               "start": "Start the application",
-               "stop": "Stop the application",
-               "feedback": "Open a web page to provide feedback to Gigantum"
+    actions = {"install": "Install the Gigantum Client Docker Image",
+               "update": "Update the Gigantum Client Docker Image",
+               "start": "Start the Client",
+               "stop": "Stop the Client",
+               "feedback": "Open a web page to provide feedback"
                }
 
     help_str = ""
     for action in actions:
         help_str = "{}  - {}: {}\n".format(help_str, action, actions[action])
 
-    description_str = "Command Line Interface for the Gigantum Local Platform (Alpha)\n\n"
+    description_str = "Command Line Interface for the local Gigantum Client application\n\n"
     description_str = description_str + "The following actions are supported:\n\n{}".format(help_str)
 
     parser = argparse.ArgumentParser(description=description_str,
@@ -49,7 +49,7 @@ def main():
     parser.add_argument("--edge", "-e",
                         action='store_true',
                         help="Optional flag indicating if the edge version should be used."
-                             " Applicable to install, update, and start commands")
+                             " Applicable to install, update, and start commands. You must have access to this image.")
     parser.add_argument("action", help="Action to perform")
 
     args = parser.parse_args()
