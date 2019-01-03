@@ -32,13 +32,10 @@ from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
 
 
 def _cleanup_containers() -> None:
-    """
-
-    Args:
-        stop:
+    """Method to clean up gigantum managed containers, stopping if needed.
 
     Returns:
-
+        None
     """
     docker = DockerInterface()
 
