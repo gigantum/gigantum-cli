@@ -31,6 +31,45 @@ from gigantumcli.changelog import ChangeLog
 from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
 
 
+def _cleanup_containers() -> None:
+    """
+
+    Args:
+        stop:
+
+    Returns:
+
+    """
+    docker = DockerInterface()
+
+    # Stop any project containers
+    for container in docker.client.containers.list():
+        if "gmlb-" in container.name:
+            _, user, owner, project_name = container.name.split('-', 3)
+            print('- Cleaning up container for Project: {}'.format(project_name))
+            container.stop()
+            container.remove()
+
+    # Stop app container
+    try:
+        app_container = docker.client.containers.get("gigantum.labmanager-edge")
+
+        print('- Cleaning up Gigantum Client container')
+        app_container.stop()
+        app_container.remove()
+    except NotFound:
+        pass
+
+    try:
+        app_container = docker.client.containers.get("gigantum.labmanager")
+
+        print('- Cleaning up Gigantum Client container')
+        app_container.stop()
+        app_container.remove()
+    except NotFound:
+        pass
+
+
 def install(image_name):
     """Method to install the Gigantum Image
 
@@ -49,11 +88,11 @@ def install(image_name):
         try:
             # Check to see if the image has already been pulled
             docker.client.images.get(image_name)
-            raise ExitCLI("** Application already installed. Run `gigantum update` instead.")
+            raise ExitCLI("** Gigantum Client already installed. Run `gigantum update` instead.")
 
         except ImageNotFound:
             # Pull for the first time
-            print("\nDownloading and installing the Gigantum Docker Image. Please wait...\n")
+            print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             image = docker.client.images.pull(image_name, 'latest')
 
     except APIError:
@@ -96,7 +135,7 @@ def update(image_name, tag=None):
                 try:
                     current_image = docker.client.images.get("{}:latest".format(image_name))
                 except ImageNotFound:
-                    raise ExitCLI("Gigantum Image not yet installed. Run 'gigantum install' first.")
+                    raise ExitCLI("Gigantum Client not yet installed. Run 'gigantum install' first.")
                 short_id = current_image.short_id.split(':')[1]
 
                 # Check if there is an update available
@@ -118,7 +157,7 @@ def update(image_name, tag=None):
         # Make sure user wants to pull
         if ask_question("Are you sure you want to update?"):
             # Pull
-            print("\nDownloading and installing the Gigantum Docker Image. Please wait...\n")
+            print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             image = docker.client.images.pull(image_name, tag)
 
             # If pulling not truly latest, force to latest
@@ -136,7 +175,7 @@ def update(image_name, tag=None):
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
-    print("\nSuccessfully pulled {}:{}\n".format(short_id, image_name))
+    print("\nSuccessfully pulled {}:{}\n".format(image_name, short_id))
 
 
 def _check_for_api(launch_browser=False, timeout=5):
@@ -165,7 +204,7 @@ def _check_for_api(launch_browser=False, timeout=5):
         time.sleep(1)
 
     if success is True and launch_browser is True:
-        time.sleep(2)
+        time.sleep(1)
         # If here, things look OK. Start browser
         webbrowser.open_new("http://localhost:10000")
 
@@ -182,6 +221,10 @@ def start(image_name, tag=None):
     Returns:
         None 
     """
+    # Make sure user is not root
+    if is_running_as_admin():
+        raise ExitCLI("Do not run `gigantum start` as root.")
+
     print("Verifying Docker is available...")
     # Check if Docker is running
     docker = DockerInterface()
@@ -189,10 +232,6 @@ def start(image_name, tag=None):
     if not tag:
         # Trying to update to the latest version
         tag = 'latest'
-
-    # Make sure user is not root
-    if is_running_as_admin():
-        raise ExitCLI("Do not run `gigantum start` as root.")
 
     # Check if working dir exists
     working_dir = os.path.join(os.path.expanduser("~"), "gigantum")
@@ -203,24 +242,17 @@ def start(image_name, tag=None):
     try:
         docker.client.images.get("{}:{}".format(image_name, tag))
     except ImageNotFound:
-        raise ExitCLI("Application not found. Did you run `gigantum install` yet?")
+        raise ExitCLI("Gigantum Client container not found. Did you run `gigantum install` yet?")
 
     # Check to see if already running
     try:
         if _check_for_api(launch_browser=False, timeout=1):
-            print("Application already running on http://localhost:10000")
+            print("Client already running on http://localhost:10000")
             _check_for_api(launch_browser=True)
-            raise ExitCLI("If app does not load in your browser, run `gigantum stop` and then `gigantum start`")
+            raise ExitCLI("If page does not load, restart by running `gigantum stop` and then `gigantum start` again")
 
-        # Check to see if the container already exists
-        old_container = docker.client.containers.get(image_name.replace("/", "-"))
-
-        # if here it does, so for now remove the old container so you can relaunch
-        old_container.stop()
-        old_container.remove()
-
-        # Do a container prune to make sure things are cleaned up
-        docker.client.containers.prune()
+        # remove any lingering gigantum managed containers
+        _cleanup_containers()
 
     except NotFound:
         # If here, the API isn't running and an older container isn't lingering, so just move along.
@@ -307,37 +339,8 @@ def stop():
         None
     """
     if ask_question("Stop all Gigantum managed containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!"):
-        docker = DockerInterface()
-
-        # Stop any labbook containers
-        for container in docker.client.containers.list():
-            if "gmlb-" in container.name:
-                _, user, owner, labbook_name = container.name.split('-', 3)
-                print('- Stopping container for LabBook: {}'.format(labbook_name))
-                container.stop()
-                container.remove()
-
-        # Stop app container
-        try:
-            app_container = docker.client.containers.get("gigantum.labmanager-edge")
-
-            print('- Stopping Gigantum app container')
-            app_container.stop()
-            app_container.remove()
-        except NotFound:
-            pass
-
-        try:
-            app_container = docker.client.containers.get("gigantum.labmanager")
-
-            print('- Stopping Gigantum app container')
-            app_container.stop()
-            app_container.remove()
-        except NotFound:
-            pass
-
-        # Do a container prune to make sure things are cleaned up
-        docker.client.containers.prune()
+        # remove any lingering gigantum managed containers
+        _cleanup_containers()
     else:
         raise ExitCLI("Stop command cancelled")
 
@@ -348,6 +351,6 @@ def feedback():
     Returns:
         None
     """
-    feedback_url = "https://docs.gigantum.com/discuss"
+    feedback_url = "https://feedback.gigantum.com"
     print("You can provide feedback here: {}".format(feedback_url))
     webbrowser.open_new(feedback_url)
