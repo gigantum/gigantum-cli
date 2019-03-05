@@ -28,7 +28,7 @@ import uuid
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
-from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin
+from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin, get_nvidia_driver_version
 
 
 def _cleanup_containers() -> None:
@@ -281,7 +281,8 @@ def start(image_name, tag=None):
     else:
         # For anything else, just use default mode.
         environment_mapping = {'HOST_WORK_DIR': working_dir,
-                               'LOCAL_USER_ID':  os.getuid()}
+                               'LOCAL_USER_ID':  os.getuid(),
+                               'NVIDIA_DRIVER_VERSION': get_nvidia_driver_version()}
         volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
