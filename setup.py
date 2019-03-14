@@ -26,8 +26,8 @@ setup(
 
     install_requires=install_requires,
 
-    author='Gigantum/FlashX, LLC',
-    author_email='hello@gigantum.com',
+    author='Gigantum Inc',
+    author_email='support@gigantum.com',
 
     entry_points={
         'console_scripts': ['gigantum=gigantumcli.cli:main'],
@@ -39,9 +39,9 @@ setup(
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5'
     ],
     keywords=[
         'data-science',

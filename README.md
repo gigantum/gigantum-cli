@@ -15,8 +15,8 @@ interface to install, update, start, and stop the application.
 More detailed install instructions can be found at the Gigantum
 [docs site](https://docs.gigantum.com/docs)
 
-If you encounter any issues or have any questions or comments, please leave a
-message on our [discussion board](https://docs.gigantum.com/discuss).
+If you encounter any issues or have any questions or comments, please join our
+ [Spectrum Chat Community](https://spectrum.chat/gigantum).
 
 ## Prerequisites
 
@@ -24,8 +24,7 @@ message on our [discussion board](https://docs.gigantum.com/discuss).
 
    This tool requires that you have Python and
    [pip](https://pip.pypa.io/en/stable/installing/) installed on your system.
-   It works with Python 2.7 and 3.4+, though the instructions below will use
-   python3 (which is highly recommended).
+   It works with Python 3.4 and newer.
 
 2. **Docker**
 
@@ -96,7 +95,7 @@ specified when operating.
 
 ## Install the CLI
 
-This package is available for install via `pip`. It runs on Python 2 and 3 and
+This package is available for install via `pip`. It runs on Python 3 and
 supports Windows, OSX and Linux.
 
 1. (Optional) To isolate this package from your system Python, it is often best
@@ -193,7 +192,7 @@ The Gigantum working directory location changes based on your operating system:
 - **Linux**: `/home/<username>/gigantum`
 
 This directory follows a standard directory structure that organizes content by
-user and namespace. A namespace is the "owner" of a LabBook, and typically the
+user and namespace. A namespace is the "owner" of a Project, and typically the
 creator. The working directory is organized as illustrated below:
 
 ```
@@ -201,10 +200,10 @@ creator. The working directory is organized as illustrated below:
     |_ <logged in user's username>
         |_ <namespace>
                |_ labbooks
-                  |_ <labbook name>
+                  |_ <project name>
 ```
 
-As an example, if the user `sarah` created 1 LabBook and downloaded 1 LabBook
+As an example, if the user `sarah` created 1 Project and downloaded 1 Project
 from the user `janet` the directory would look like this:
 
 ```
