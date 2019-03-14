@@ -65,7 +65,7 @@ def is_running_as_admin():
     return is_admin
 
 
-def get_nvidia_driver_version() -> str:
+def get_nvidia_driver_version() -> Optional[str]:
     driver_version = None
     if platform.system() == 'Linux':
         try:
