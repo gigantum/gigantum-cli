@@ -19,6 +19,7 @@
 # SOFTWARE.
 from __future__ import print_function
 from six.moves import input
+from typing import Optional
 import ctypes
 import os
 import platform
