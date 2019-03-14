@@ -26,7 +26,7 @@ setup(
 
     install_requires=install_requires,
 
-    author='Gigantum Inc',
+    author='Gigantum, Inc',
     author_email='support@gigantum.com',
 
     entry_points={
