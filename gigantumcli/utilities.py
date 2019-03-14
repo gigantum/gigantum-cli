@@ -19,6 +19,7 @@
 # SOFTWARE.
 from __future__ import print_function
 from six.moves import input
+from typing import Optional
 import ctypes
 import os
 import platform
@@ -65,14 +66,18 @@ def is_running_as_admin():
     return is_admin
 
 
-def get_nvidia_driver_version() -> str:
+def get_nvidia_driver_version() -> Optional[str]:
     driver_version = None
     if platform.system() == 'Linux':
-        bash_command = "nvidia-smi --query-gpu=driver_version --format=csv,noheader"
-        process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-        output, error = process.communicate()
-        if not error:
-            m = re.match(r"([\d.]+)", output.decode())
-            if m:
-                driver_version = m.group(0)
+        try:
+            bash_command = "nvidia-smi --query-gpu=driver_version --format=csv,noheader"
+            process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
+            output, error = process.communicate()
+            if not error:
+                m = re.match(r"([\d.]+)", output.decode())
+                if m:
+                    driver_version = m.group(0)
+
+        except FileNotFoundError:
+            pass
     return driver_version
