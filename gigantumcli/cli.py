@@ -50,6 +50,12 @@ def main():
                         action='store_true',
                         help="Optional flag indicating if the edge version should be used."
                              " Applicable to install, update, and start commands. You must have access to this image.")
+
+    parser.add_argument("--wait", "-w",
+                        type=int,
+                        default=30,
+                        help="Number of seconds to wait for Client during `start`")
+
     parser.add_argument("action", help="Action to perform")
 
     args = parser.parse_args()
@@ -65,7 +71,7 @@ def main():
         elif args.action == "update":
             update(image_name, args.tag)
         elif args.action == "start":
-            start(image_name, args.tag)
+            start(image_name, args.wait, args.tag)
         elif args.action == "stop":
             stop()
         elif args.action == "feedback":

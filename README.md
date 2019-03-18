@@ -40,15 +40,13 @@ If you encounter any issues or have any questions or comments, please join our
      - Requires Microsoft Windows 10 Professional, Enterprise, or Education
        (64-bit)
      - On most systems, Virtualization must be enabled in the "BIOS" (aka
-       UEFI) , and Hyper-V must also be enabled. Docker will usually
+       UEFI), and Hyper-V must also be enabled. Docker will usually
        set this for you, but is a good first place to look if things
        aren't working.
-     - Requires Docker CE Stable
-     - [https://store.docker.com/editions/community/docker-ce-desktop-windows](https://store.docker.com/editions/community/docker-ce-desktop-windows)
+     - Requires Docker CE Stable: [https://store.docker.com/editions/community/docker-ce-desktop-windows](https://store.docker.com/editions/community/docker-ce-desktop-windows)
 
    - Mac:
-     - Docker for Mac works on OS X El Capitan 10.11 and newer macOS releases.
-     - [https://store.docker.com/editions/community/docker-ce-desktop-mac](https://store.docker.com/editions/community/docker-ce-desktop-mac)
+     - Docker for Mac works on OS X El Capitan 10.11 and newer macOS releases: [https://store.docker.com/editions/community/docker-ce-desktop-mac](https://store.docker.com/editions/community/docker-ce-desktop-mac)
 
    - Ubuntu:
      - (Recommended Method) Install using Docker's "helper" script, which
@@ -87,15 +85,15 @@ If you encounter any issues or have any questions or comments, please join our
 
 3. **(Optional) Adjust Docker Resources**
 
-You can configure the amount of CPU and RAM allocated to Docker by clicking on
-`Preferences > Advanced` from the Docker Menu. Docker will use up to the amount
-specified when operating.
+On Windows or MacOS, you can configure the amount of CPU and RAM allocated to
+Docker by clicking on `Preferences > Advanced` from the Docker Menu. Docker
+will use up to the amount specified when operating.
 
     ![preferences](docs/img/resources.png)
 
 ## Install the CLI
 
-This package is available for install via `pip`. It runs on Python 3 and
+This package is available for install via `pip`. It runs on Python 3.4+ and
 supports Windows, OSX and Linux.
 
 1. (Optional) To isolate this package from your system Python, it is often best

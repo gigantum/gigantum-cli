@@ -178,7 +178,7 @@ def update(image_name, tag=None):
 
 
 def _check_for_api(launch_browser=False, timeout=5):
-    """Helper method to check for the API to be live for up to 15 seconds and then optionally launch a browser window
+    """Check for the API to be live for up to `timeout` seconds, then optionally launch a browser window
 
     Args:
         launch_browser(bool): flag indicating if the browser should be launched on success == True
@@ -210,15 +210,16 @@ def _check_for_api(launch_browser=False, timeout=5):
     return success
 
 
-def start(image_name, tag=None):
+def start(image_name, timeout, tag=None):
     """Method to start the application
 
     Args:
-        tag(str): Tag to run, defaults to latest
         image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
+        timeout(int): Number of seconds to wait for API to come up
+        tag(str): Tag to run, defaults to latest
 
     Returns:
-        None 
+        None
     """
     # Make sure user is not root
     if is_running_as_admin():
@@ -322,8 +323,9 @@ def start(image_name, tag=None):
         raise ExitCLI(msg)
 
     # Wait for API to be live before opening the user's browser
-    if not _check_for_api(launch_browser=True, timeout=15):
-        msg = "\n\nGigantum client failed to start! Try restarting Docker and then start again."
+    if not _check_for_api(launch_browser=True, timeout=timeout):
+        msg = "\n\nTimed out waiting for Gigantum Client web API! Try restarting Docker and then start again." + \
+                "\nOr, increase time-out with --wait option (default is 30 seconds)."
 
         # Stop and remove the container
         container.stop()
