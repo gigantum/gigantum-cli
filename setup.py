@@ -23,7 +23,7 @@ setup(
 
     description='CLI for the Gigantum Platform',
     long_description=long_description,
-
+    long_description_content_type='text/markdown',
     install_requires=install_requires,
 
     author='Gigantum, Inc.',
