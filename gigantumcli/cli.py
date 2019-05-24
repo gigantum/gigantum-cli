@@ -53,7 +53,7 @@ def main():
 
     parser.add_argument("--wait", "-w",
                         type=int,
-                        default=30,
+                        default=60,
                         help="Number of seconds to wait for Client during `start`")
 
     parser.add_argument("action", help="Action to perform")
