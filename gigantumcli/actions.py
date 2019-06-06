@@ -42,7 +42,7 @@ def _cleanup_containers() -> None:
     docker = DockerInterface()
 
     # Stop any project containers
-    for container in docker.client.containers.list():
+    for container in docker.client.containers.list(all=True):
         if "gmlb-" in container.name:
             _, user, owner, project_name = container.name.split('-', 3)
             print('- Cleaning up container for Project: {}'.format(project_name))
@@ -106,12 +106,13 @@ def install(image_name):
     print("\nSuccessfully pulled {}:{}\n".format(image_name, short_id))
 
 
-def update(image_name, tag=None):
+def update(image_name, tag=None, accept_confirmation=False):
     """Method to update the existing image, warning about changes before accepting
 
     Args:
         image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
         tag(str): Tag to pull if you wish to override `latest`
+        accept_confirmation(bool): Optional Flag indicating if you should skip the confirmation and auto-accept
 
     Returns:
         None
@@ -154,7 +155,7 @@ def update(image_name, tag=None):
                 tag = 'latest'
 
         # Make sure user wants to pull
-        if ask_question("Are you sure you want to update?"):
+        if ask_question("Are you sure you want to update?", accept_confirmation):
             # Pull
             print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             image = docker.client.images.pull(image_name, tag)
@@ -210,13 +211,15 @@ def _check_for_api(launch_browser=False, timeout=5):
     return success
 
 
-def start(image_name, timeout, tag=None):
+def start(image_name, timeout, tag=None, working_dir="~/gigantum", accept_confirmation=False):
     """Method to start the application
 
     Args:
         image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
         timeout(int): Number of seconds to wait for API to come up
         tag(str): Tag to run, defaults to latest
+        working_dir(str): Location to mount as the Gigantum working directory
+        accept_confirmation(bool): Optional Flag indicating if you should skip the confirmation and auto-accept
 
     Returns:
         None
@@ -234,7 +237,7 @@ def start(image_name, timeout, tag=None):
         tag = 'latest'
 
     # Check if working dir exists
-    working_dir = os.path.join(os.path.expanduser("~"), "gigantum")
+    working_dir = os.path.expanduser(working_dir)
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
 
@@ -242,7 +245,12 @@ def start(image_name, timeout, tag=None):
     try:
         docker.client.images.get("{}:{}".format(image_name, tag))
     except ImageNotFound:
-        raise ExitCLI("Gigantum Client image not found. Did you run `gigantum install` yet?")
+        if ask_question("The Gigantum Client Docker image not found. Would you like to install it now?",
+                        accept_confirmation):
+            install(image_name)
+        else:
+            raise ExitCLI("Downloading the Gigantum Client Docker image is required to start the Client. "
+                          "Please run `gigantum install`.")
 
     # Check to see if already running
     try:
@@ -298,9 +306,9 @@ def start(image_name, timeout, tag=None):
     print("Starting, please wait...")
     time.sleep(1)
 
-    # Make sure volumes have mounted properly, by checking for the log file for up to 30 seconds
+    # Make sure volumes have mounted properly, by checking for the log file for up to 60 seconds
     success = False
-    for _ in range(30):
+    for _ in range(60):
         if os.path.exists(os.path.join(working_dir, '.labmanager', 'logs', 'labmanager.log')):
             success = True
             break
@@ -325,7 +333,7 @@ def start(image_name, timeout, tag=None):
     # Wait for API to be live before opening the user's browser
     if not _check_for_api(launch_browser=True, timeout=timeout):
         msg = "\n\nTimed out waiting for Gigantum Client web API! Try restarting Docker and then start again." + \
-                "\nOr, increase time-out with --wait option (default is 30 seconds)."
+                "\nOr, increase time-out with --wait option (default is 60 seconds)."
 
         # Stop and remove the container
         container.stop()
@@ -334,13 +342,16 @@ def start(image_name, timeout, tag=None):
         raise ExitCLI(msg)
 
 
-def stop():
+def stop(accept_confirmation=False):
     """Method to stop all containers
+    Args:
+        accept_confirmation(bool): Optional Flag indicating if you should skip the confirmation and auto-accept
 
     Returns:
         None
     """
-    if ask_question("Stop all Gigantum managed containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!"):
+    if ask_question("Stop all Gigantum managed containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!",
+                    accept_confirmation):
         # remove any lingering gigantum managed containers
         _cleanup_containers()
     else:

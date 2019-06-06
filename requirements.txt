@@ -1,4 +1,5 @@
 # docker currently mandates a specific version range for requests (which we use)
 # Please ensure that requests remains required if you bump the docker version!
 docker==3.7.2
-six==1.11.0
+six==1.12.0
+

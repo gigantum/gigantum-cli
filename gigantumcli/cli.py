@@ -35,7 +35,7 @@ def main():
     for action in actions:
         help_str = "{}  - {}: {}\n".format(help_str, action, actions[action])
 
-    description_str = "Command Line Interface for the local Gigantum Client application\n\n"
+    description_str = "Command Line Interface to use the local Gigantum Client application\n\n"
     description_str = description_str + "The following actions are supported:\n\n{}".format(help_str)
 
     parser = argparse.ArgumentParser(description=description_str,
@@ -52,9 +52,20 @@ def main():
                              " Applicable to install, update, and start commands. You must have access to this image.")
 
     parser.add_argument("--wait", "-w",
+                        metavar="<seconds>",
                         type=int,
                         default=60,
                         help="Number of seconds to wait for Client during `start`")
+
+    parser.add_argument("--yes", "-y",
+                        action='store_true',
+                        help="Optional flag to automatically accept confirmation prompts")
+
+    parser.add_argument("--working-dir", "-d",
+                        metavar="<working directory>",
+                        default="~/gigantum",
+                        help="Optional parameter to specify a location for the gigantum working directory when starting"
+                             "the Client, other than the default (~/gigantum)")
 
     parser.add_argument("action", help="Action to perform")
 
@@ -69,11 +80,12 @@ def main():
         if args.action == "install":
             install(image_name)
         elif args.action == "update":
-            update(image_name, args.tag)
+            update(image_name, args.tag, args.yes)
         elif args.action == "start":
-            start(image_name, args.wait, args.tag)
+            start(image_name, timeout=args.wait, tag=args.tag, working_dir=args.working_dir,
+                  accept_confirmation=args.yes)
         elif args.action == "stop":
-            stop()
+            stop(args.yes)
         elif args.action == "feedback":
             feedback()
         else:
