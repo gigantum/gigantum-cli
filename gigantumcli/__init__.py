@@ -1,2 +1,2 @@
 # Gigantum CLI Version
-__version__ = "0.19"
+__version__ = "1.0"

@@ -1,24 +1,7 @@
-# Copyright (c) 2017 FlashX, LLC
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import sys
 import platform
+from typing import Optional
+
 from docker.errors import APIError, ImageNotFound, NotFound
 import os
 import webbrowser
@@ -95,11 +78,7 @@ def install(image_name):
             image = docker.client.images.pull(image_name, 'latest')
 
     except APIError:
-        msg = "ERROR: failed to pull image!"
-        msg += "\n- Are you signed into DockerHub?"
-        msg += "\n- Do you have access to {}? If not, contact Gigantum.".format(image_name)
-        msg += "\n    - Can test by going here: https://hub.docker.com/r/gigantum/labmanager/"
-        msg += "\n    - If you see `404 Not Found`, request access from Gigantum\n"
+        msg = "ERROR: failed to pull image! Verify your internet connection and try again."
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
@@ -167,18 +146,14 @@ def update(image_name, tag=None, accept_confirmation=False):
         else:
             raise ExitCLI("Update cancelled")
     except APIError:
-        msg = "ERROR: failed to pull image!"
-        msg += "\n- Are you signed into DockerHub?"
-        msg += "\n- Do you have access to {}? If not, contact Gigantum.".format(image_name)
-        msg += "\n    - Can test by going here: https://hub.docker.com/r/gigantum/labmanager/"
-        msg += "\n    - If you see `404 Not Found`, request access\n"
+        msg = "ERROR: failed to pull image! Verify your internet connection and try again."
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
     print("\nSuccessfully pulled {}:{}\n".format(image_name, short_id))
 
 
-def _check_for_api(launch_browser=False, timeout=5):
+def _check_for_api(launch_browser: bool = False, timeout: int = 5):
     """Check for the API to be live for up to `timeout` seconds, then optionally launch a browser window
 
     Args:
@@ -211,18 +186,16 @@ def _check_for_api(launch_browser=False, timeout=5):
     return success
 
 
-def start(image_name, timeout, tag=None, working_dir="~/gigantum", accept_confirmation=False):
+def start(image_name: str, timeout: int, tag: Optional[str] = None, working_dir: str = "~/gigantum",
+          accept_confirmation: bool = False) -> None:
     """Method to start the application
 
     Args:
-        image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
-        timeout(int): Number of seconds to wait for API to come up
-        tag(str): Tag to run, defaults to latest
-        working_dir(str): Location to mount as the Gigantum working directory
-        accept_confirmation(bool): Optional Flag indicating if you should skip the confirmation and auto-accept
-
-    Returns:
-        None
+        image_name: Image name, including repository and namespace (e.g. gigantum/labmanager)
+        timeout: Number of seconds to wait for API to come up
+        tag: Tag to run, defaults to latest
+        working_dir: Location to mount as the Gigantum working directory
+        accept_confirmation: Optional Flag indicating if you should skip the confirmation and auto-accept
     """
     # Make sure user is not root
     if is_running_as_admin():
@@ -235,6 +208,7 @@ def start(image_name, timeout, tag=None, working_dir="~/gigantum", accept_confir
     if not tag:
         # Trying to update to the latest version
         tag = 'latest'
+    image_name_with_tag = f"{image_name}:{tag}"
 
     # Check if working dir exists
     working_dir = os.path.expanduser(working_dir)
@@ -243,7 +217,7 @@ def start(image_name, timeout, tag=None, working_dir="~/gigantum", accept_confir
 
     # Check if application has been installed
     try:
-        docker.client.images.get("{}:{}".format(image_name, tag))
+        docker.client.images.get(image_name_with_tag)
     except ImageNotFound:
         if ask_question("The Gigantum Client Docker image not found. Would you like to install it now?",
                         accept_confirmation):
@@ -275,12 +249,15 @@ def start(image_name, timeout, tag=None, working_dir="~/gigantum", accept_confir
 
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
+    print(f'Host directory for Gigantum files: {working_dir}')
     if platform.system() == 'Windows':
-        # windows docker has the following eccentricities
-        # no user ids, WINDOWS_HOST env var, /C/a/b/ format for volume C:\\a\\b
-        environment_mapping = {'HOST_WORK_DIR': docker.dockerize_volume_path(working_dir),
+        # windows docker has some eccentricities
+        # no user ids, we specify a WINDOWS_HOST env var, and need to rewrite the paths for
+        # bind-mounting inside the Client (see `dockerize_mount_path()` for details)
+        rewritten_path = docker.dockerize_mount_path(working_dir, image_name_with_tag)
+        environment_mapping = {'HOST_WORK_DIR': rewritten_path,
                                'WINDOWS_HOST': 1}
-        volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
+        volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
     elif platform.system() == 'Darwin':
         # For macOS, use the cached mode for improved performance
@@ -296,7 +273,7 @@ def start(image_name, timeout, tag=None, working_dir="~/gigantum", accept_confir
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
-    container = docker.client.containers.run(image="{}:{}".format(image_name, tag),
+    container = docker.client.containers.run(image=image_name_with_tag,
                                              detach=True,
                                              name=image_name.replace("/", "."),
                                              init=True,
