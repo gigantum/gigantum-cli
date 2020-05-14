@@ -42,11 +42,11 @@ class DockerInterface:
         """
         queried_system = platform.system()
         if queried_system == 'Linux':
-            print_cmd = "Docker isn't running. Typically docker runs at startup. Check that `dockerd` is running."
+            print_cmd = "Docker isn't running. Typically Docker runs as a service. Check that `dockerd` is running."
         elif queried_system == 'Darwin':
-            print_cmd = "Docker isn't running. Start the Docker for Mac app and try again!"
+            print_cmd = "Docker isn't running. Start the Docker Desktop app and try again!"
         elif queried_system == 'Windows':
-            print_cmd = "Docker isn't running. Start the Docker CE for Windows app and try again!"
+            print_cmd = "Docker isn't running. Start the Docker Desktop app and try again!"
         else:
             raise ValueError("Unsupported OS: {}".format(queried_system))
 
@@ -129,6 +129,15 @@ class DockerInterface:
             return False
         except docker.errors.APIError as _:
             return False
+        except Exception as err:
+            # Simple way to avoid importing pywintypes while catching the exception, which will only exist on windows
+            # This error will be raised when the docker socket can't be open on windows because
+            # docker isn't running
+            if "pywintypes.error" in str(type(err)):
+                return False
+            else:
+                # Some other error happened, so bubble it up
+                raise
 
     @staticmethod
     def _get_docker_server_api_version():
