@@ -208,7 +208,7 @@ def start(image_name: str, timeout: int, tag: Optional[str] = None, working_dir:
     if not tag:
         # Trying to update to the latest version
         tag = 'latest'
-    image_name_with_tag = f"{image_name}:{tag}"
+    image_name_with_tag = "{}:{}".format(image_name, tag)
 
     # Check if working dir exists
     working_dir = os.path.expanduser(working_dir)
@@ -249,7 +249,7 @@ def start(image_name: str, timeout: int, tag: Optional[str] = None, working_dir:
 
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
-    print(f'Host directory for Gigantum files: {working_dir}')
+    print('Host directory for Gigantum files: {}'.format(working_dir))
     if platform.system() == 'Windows':
         # windows docker has some eccentricities
         # no user ids, we specify a WINDOWS_HOST env var, and need to rewrite the paths for
