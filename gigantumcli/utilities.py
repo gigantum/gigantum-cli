@@ -82,6 +82,10 @@ def get_nvidia_driver_version() -> Optional[str]:
                 if m:
                     driver_version = m.group(0)
 
+                # If driver has a build version, strip it because we don't match on that.
+                parts = driver_version.split('.')
+                driver_version = f"{parts[0]}.{parts[1]}"
+
         except FileNotFoundError:
             pass
     return driver_version
