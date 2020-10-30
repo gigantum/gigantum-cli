@@ -283,9 +283,9 @@ def start(image_name: str, timeout: int, tag: Optional[str] = None, working_dir:
     print("Starting, please wait...")
     time.sleep(1)
 
-    # Make sure volumes have mounted properly, by checking for the log file for up to 60 seconds
+    # Make sure volumes have mounted properly, by checking for the log file for up to timeout seconds
     success = False
-    for _ in range(60):
+    for _ in range(timeout):
         if os.path.exists(os.path.join(working_dir, '.labmanager', 'logs', 'labmanager.log')):
             success = True
             break
