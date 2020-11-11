@@ -13,6 +13,14 @@ from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
 from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin, get_nvidia_driver_version
 
+# Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
+# See https://github.com/docker/docker-py/issues/2696
+if platform.system() == 'Windows':
+    from pywintypes import error as TempDockerError
+else:
+    class TempDockerError(OSError):
+        pass
+
 
 def _cleanup_containers() -> None:
     """Method to clean up gigantum managed containers, stopping if needed.
@@ -41,6 +49,10 @@ def _cleanup_containers() -> None:
         app_container.remove()
     except NotFound:
         pass
+    except (requests.exceptions.ChunkedEncodingError, TempDockerError):
+        # Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
+        # See https://github.com/docker/docker-py/issues/2696
+        pass
 
     try:
         app_container = docker.client.containers.get("gigantum.labmanager")
@@ -49,6 +61,10 @@ def _cleanup_containers() -> None:
         app_container.stop()
         app_container.remove()
     except NotFound:
+        pass
+    except (requests.exceptions.ChunkedEncodingError, TempDockerError):
+        # Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
+        # See https://github.com/docker/docker-py/issues/2696
         pass
 
 
