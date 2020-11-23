@@ -1,8 +1,4 @@
 import pytest
-from pkg_resources import resource_filename
-import os
-import json
-from mock import patch
 
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.actions import _cleanup_containers

@@ -12,6 +12,7 @@ import uuid
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
 from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin, get_nvidia_driver_version
+from gigantumcli.server import ServerConfig
 
 # Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
 # See https://github.com/docker/docker-py/issues/2696
@@ -349,6 +350,33 @@ def stop(accept_confirmation=False):
         _cleanup_containers()
     else:
         raise ExitCLI("Stop command cancelled")
+
+
+def add_server(working_dir: str = "~/gigantum"):
+    """Method to add a server to this Client's configuration
+    Args:
+        working_dir(str): Working dir for the client
+
+    Returns:
+        None
+    """
+    print("\n\nEnter the server URL to add (e.g. https://gigantum.mycompany.com): ")
+    server_url = input()
+    server_config = ServerConfig(working_dir=working_dir)
+    server_config.add_server(server_url)
+    print("\nServer successfully added. The server will now be available on your Client login page.")
+
+
+def list_servers(working_dir: str = "~/gigantum"):
+    """Method to list servers this Client is configured to use
+    Args:
+        working_dir(str): Working dir for the client
+
+    Returns:
+        None
+    """
+    server_config = ServerConfig(working_dir=working_dir)
+    server_config.list_servers(should_print=True)
 
 
 def feedback():

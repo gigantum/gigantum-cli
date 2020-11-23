@@ -1,5 +1,5 @@
 import argparse
-from gigantumcli.actions import install, update, start, stop, feedback, ExitCLI
+from gigantumcli.actions import install, update, start, stop, feedback, list_servers, add_server, ExitCLI
 import sys
 
 
@@ -9,6 +9,8 @@ def main():
                "update": "Update the Gigantum Client Docker Image",
                "start": "Start the Client",
                "stop": "Stop the Client",
+               "add-server": "Add a new Team or Enterprise server to this Client installation",
+               "list-servers": "List the available servers for this Client installation",
                "feedback": "Open a web page to provide feedback"
                }
 
@@ -69,6 +71,10 @@ def main():
             stop(args.yes)
         elif args.action == "feedback":
             feedback()
+        elif args.action == "add-server":
+            add_server(working_dir=args.working_dir)
+        elif args.action == "list-servers":
+            list_servers(working_dir=args.working_dir)
         else:
             raise ValueError("Unsupported action `{}` provided. Available actions: {}".format(args.action,
                                                                                               ", ".join(actions.keys())))
