@@ -3,7 +3,7 @@ import os
 import json
 import glob
 import requests
-from gigantumcli.utilities import ExitCLI
+from gigantumcli.utilities import ExitCLI, ask_question
 
 
 class ServerConfig:
@@ -12,7 +12,44 @@ class ServerConfig:
         self.servers_dir = os.path.join(self.working_dir, '.labmanager', 'servers')
 
     @staticmethod
-    def _discover_server(url: str):
+    def _fetch_wellknown_data(url):
+        succeed = False
+        data = None
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                try:
+                    # If a 200, make sure you get valid JSON back in case you were routed to some other 200 response.
+                    data = response.json()
+                    succeed = True
+                except json.JSONDecodeError:
+                    pass
+        except requests.exceptions.ConnectionError:
+            pass
+        except requests.exceptions.SSLError:
+            print("WARNING: SSL verification failed while trying to configure from server located at {}. Only if this"
+                  " is expected (e.g. server created with self-signed certificates) is it safe to proceed.".format(url))
+            if ask_question("Do you want to continue?"):
+                # Try again with SSL verification disabled
+                try:
+                    response = requests.get(url, verify=False)
+                    if response.status_code == 200:
+                        try:
+                            # If a 200, make sure you get valid JSON back in case you were routed to some
+                            # other 200 response.
+                            data = response.json()
+                            succeed = True
+                        except json.JSONDecodeError:
+                            pass
+                except requests.exceptions.ConnectionError:
+                    pass
+            else:
+                # User decided not to proceed.
+                raise ExitCLI("SSL Verification failed on server located at {}.".format(url))
+
+        return succeed, data
+
+    def _discover_server(self, url: str):
         """Method to load the server's discovery data
 
         Args:
@@ -28,33 +65,13 @@ class ServerConfig:
         team_url = urljoin("https://" + url_parts.netloc, 'gigantum/.well-known/discover.json')
         enterprise_url = urljoin("https://" + url_parts.netloc, '.well-known/discover.json')
 
-        try:
-            response = requests.get(team_url)
-        except requests.exceptions.ConnectionError:
+        succeed, data = self._fetch_wellknown_data(team_url)
+        if not succeed:
+            succeed, data = self._fetch_wellknown_data(enterprise_url)
+
+        if not succeed:
             raise ExitCLI("Failed to discover configuration for server located at"
                           " {}. Check server URL and try again.".format(url))
-
-        data = None
-        if response.status_code == 200:
-            try:
-                # If a 200, make sure you get valid JSON back in case you were routed to some other 200 response.
-                data = response.json()
-            except json.JSONDecodeError:
-                pass
-
-        if not data:
-            response = requests.get(enterprise_url)
-            if response.status_code == 200:
-                try:
-                    # If a 200, make sure you get valid JSON back in case you were routed to some other 200 response.
-                    data = response.json()
-                except json.JSONDecodeError:
-                    pass
-
-        if not data:
-            raise ExitCLI("Failed to discover configuration for server located at"
-                          " {} ({}). Check server URL and try again.".format(url, response.status_code))
-
         return data
 
     def add_server(self, url):
