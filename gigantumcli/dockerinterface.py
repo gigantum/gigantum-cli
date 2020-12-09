@@ -1,22 +1,3 @@
-# Copyright (c) 2017 FlashX, LLC
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import socket
 import json
 import os
@@ -30,7 +11,7 @@ from docker.errors import NotFound
 from gigantumcli.utilities import ask_question, ExitCLI
 
 
-class DockerInterface(object):
+class DockerInterface:
     """Class to provide an interface to Docker"""
 
     def __init__(self):
@@ -61,11 +42,11 @@ class DockerInterface(object):
         """
         queried_system = platform.system()
         if queried_system == 'Linux':
-            print_cmd = "Docker isn't running. Typically docker runs at startup. Check that `dockerd` is running."
+            print_cmd = "Docker isn't running. Typically Docker runs as a service. Check that `dockerd` is running."
         elif queried_system == 'Darwin':
-            print_cmd = "Docker isn't running. Start the Docker for Mac app and try again!"
+            print_cmd = "Docker isn't running. Start the Docker Desktop app and try again!"
         elif queried_system == 'Windows':
-            print_cmd = "Docker isn't running. Start the Docker CE for Windows app and try again!"
+            print_cmd = "Docker isn't running. Start the Docker Desktop app and try again!"
         else:
             raise ValueError("Unsupported OS: {}".format(queried_system))
 
@@ -102,23 +83,20 @@ class DockerInterface(object):
             print_cmd = "{}- You can change the amount of RAM and CPU allocated to Docker from".format(print_cmd)
             print_cmd = "{} the preferences menu that is available when clicking on the Docker logo".format(print_cmd)
             print_cmd = "{} in the OSX taskbar.\n".format(print_cmd)
-            print_cmd = "{}- Be sure to sign-in to DockerHub by clicking on Sign-In\n".format(print_cmd)
             print_cmd = "{}- You don't need to leave Docker running all the time, but it must be".format(print_cmd)
-            print_cmd = "{} running before you start the Gigantum application\n".format(print_cmd)
+            print_cmd = "{} running before you start the Gigantum application\n\n".format(print_cmd)
 
         elif queried_system == 'Windows':
             print_cmd = "Docker isn't installed!\n"
-            print_cmd = "{}If you have 64bit Windows 10 Pro, install Docker for Windows app here:".format(print_cmd)
+            print_cmd = "{}If you have 64bit Windows 10 Professional, Education, or Enterprise install " \
+                        "Docker for Windows app here:".format(print_cmd)
             print_cmd = "{}\n\n  https://docs.docker.com/docker-for-windows/install/  \n\n".format(print_cmd)
             print_cmd = "{}- Install the `Stable Channel` version.\n".format(print_cmd)
             print_cmd = "{}- You can change the amount of RAM and CPU allocated to Docker from".format(print_cmd)
             print_cmd = "{} the preferences menu that is available when clicking on the Docker logo".format(print_cmd)
             print_cmd = "{} in the notification area.\n".format(print_cmd)
-            print_cmd = "{}- Be sure to sign-in to DockerHub by clicking on Sign-In\n".format(print_cmd)
             print_cmd = "{}- You don't need to leave Docker running all the time, but it must be".format(print_cmd)
-            print_cmd = "{} running before you start the Gigantum application\n".format(print_cmd)
-            print_cmd = "{}\nIf you have an old version of Windows, you can still use Docker Toolbox:".format(print_cmd)
-            print_cmd = "{}\n\n  https://docs.docker.com/toolbox/overview/  \n\n".format(print_cmd)
+            print_cmd = "{} running before you start Gigantum\n\n".format(print_cmd)
         else:
             raise ValueError("Unsupported OS: {}".format(queried_system))
 
@@ -151,6 +129,15 @@ class DockerInterface(object):
             return False
         except docker.errors.APIError as _:
             return False
+        except Exception as err:
+            # Simple way to avoid importing pywintypes while catching the exception, which will only exist on windows
+            # This error will be raised when the docker socket can't be open on windows because
+            # docker isn't running
+            if "pywintypes.error" in str(type(err)):
+                return False
+            else:
+                # Some other error happened, so bubble it up
+                raise
 
     @staticmethod
     def _get_docker_server_api_version():
@@ -177,26 +164,32 @@ class DockerInterface(object):
         else:
             return version_dict['ApiVersion']
 
-    @staticmethod
-    def dockerize_volume_path(volpath):
-        """Returns a path that can be mounted as a docker volume on windows
-            Docker uses non-standard formats for windows mounts.
-            This routine converts C:\\a\\b -> /C/a/b on windows and does
-            nothing on posix systems.
+    def dockerize_mount_path(self, host_path: str, image_name_with_tag: str) -> str:
+        """Returns a path that can be mounted as a docker volume from the host
+
+        Docker uses non-standard formats for windows mounts.
+        Last we checked, this routine converts C:\a/gigantum -> /host_mnt/c/a/gigantum
+        on windows and does nothing on posix systems.
 
         Args:
-            volpath(str): a python path
+            host_path: a path on the host - Windows can use a mix of forward and back slashes
+            image_name_with_tag: e.g., 'gigantum/labmanager:latest'
 
         Returns:
-            str: path that can be handed to Docker for a volume mount
+            path that can be handed to Docker inside another container for a volume mount
         """
-        # Docker does not take ntpath formatted strings as volume mounts.
-        # detect if it's a volume path and rewrite the string.
-        if os.path.__name__ == 'ntpath':
-            # for windows switch the slashes and then sub the drive letter
-            return re.sub('(^[A-Z]):(.*$)', '/\g<1>\g<2>', volpath.replace('\\', '/'))
-        else:
-            return volpath
+        volume_mapping = {host_path: {'bind': '/mnt/gigantum', 'mode': 'ro'}}
+        container = self.client.containers.run(image=image_name_with_tag,
+                                               entrypoint='/usr/bin/tail',
+                                               command='-f /dev/null',
+                                               detach=True,
+                                               init=True,
+                                               volumes=volume_mapping,
+                                               remove=True)
+        rewritten_work_dir = container.attrs['Mounts'][0]['Source']
+        container.stop()
+
+        return rewritten_work_dir
 
     def _get_docker_client(self, check_server_version=True, fallback=True):
         """Return a docker client with proper version to match server API.

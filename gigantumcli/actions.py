@@ -1,24 +1,7 @@
-# Copyright (c) 2017 FlashX, LLC
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 import sys
 import platform
+from typing import Optional
+
 from docker.errors import APIError, ImageNotFound, NotFound
 import os
 import webbrowser
@@ -29,6 +12,15 @@ import uuid
 from gigantumcli.dockerinterface import DockerInterface
 from gigantumcli.changelog import ChangeLog
 from gigantumcli.utilities import ask_question, ExitCLI, is_running_as_admin, get_nvidia_driver_version
+from gigantumcli.server import ServerConfig
+
+# Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
+# See https://github.com/docker/docker-py/issues/2696
+if platform.system() == 'Windows':
+    from pywintypes import error as TempDockerError
+else:
+    class TempDockerError(OSError):
+        pass
 
 
 def _cleanup_containers() -> None:
@@ -42,7 +34,7 @@ def _cleanup_containers() -> None:
     docker = DockerInterface()
 
     # Stop any project containers
-    for container in docker.client.containers.list():
+    for container in docker.client.containers.list(all=True):
         if "gmlb-" in container.name:
             _, user, owner, project_name = container.name.split('-', 3)
             print('- Cleaning up container for Project: {}'.format(project_name))
@@ -58,6 +50,10 @@ def _cleanup_containers() -> None:
         app_container.remove()
     except NotFound:
         pass
+    except (requests.exceptions.ChunkedEncodingError, TempDockerError):
+        # Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
+        # See https://github.com/docker/docker-py/issues/2696
+        pass
 
     try:
         app_container = docker.client.containers.get("gigantum.labmanager")
@@ -66,6 +62,10 @@ def _cleanup_containers() -> None:
         app_container.stop()
         app_container.remove()
     except NotFound:
+        pass
+    except (requests.exceptions.ChunkedEncodingError, TempDockerError):
+        # Temporary fix due to docker 2.5.0.0 and docker-py failing when container doesn't exist
+        # See https://github.com/docker/docker-py/issues/2696
         pass
 
 
@@ -95,23 +95,20 @@ def install(image_name):
             image = docker.client.images.pull(image_name, 'latest')
 
     except APIError:
-        msg = "ERROR: failed to pull image!"
-        msg += "\n- Are you signed into DockerHub?"
-        msg += "\n- Do you have access to {}? If not, contact Gigantum.".format(image_name)
-        msg += "\n    - Can test by going here: https://hub.docker.com/r/gigantum/labmanager/"
-        msg += "\n    - If you see `404 Not Found`, request access from Gigantum\n"
+        msg = "ERROR: failed to pull image! Verify your internet connection and try again."
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
     print("\nSuccessfully pulled {}:{}\n".format(image_name, short_id))
 
 
-def update(image_name, tag=None):
+def update(image_name, tag=None, accept_confirmation=False):
     """Method to update the existing image, warning about changes before accepting
 
     Args:
         image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
         tag(str): Tag to pull if you wish to override `latest`
+        accept_confirmation(bool): Optional Flag indicating if you should skip the confirmation and auto-accept
 
     Returns:
         None
@@ -154,7 +151,7 @@ def update(image_name, tag=None):
                 tag = 'latest'
 
         # Make sure user wants to pull
-        if ask_question("Are you sure you want to update?"):
+        if ask_question("Are you sure you want to update?", accept_confirmation):
             # Pull
             print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             image = docker.client.images.pull(image_name, tag)
@@ -166,18 +163,14 @@ def update(image_name, tag=None):
         else:
             raise ExitCLI("Update cancelled")
     except APIError:
-        msg = "ERROR: failed to pull image!"
-        msg += "\n- Are you signed into DockerHub?"
-        msg += "\n- Do you have access to {}? If not, contact Gigantum.".format(image_name)
-        msg += "\n    - Can test by going here: https://hub.docker.com/r/gigantum/labmanager/"
-        msg += "\n    - If you see `404 Not Found`, request access\n"
+        msg = "ERROR: failed to pull image! Verify your internet connection and try again."
         raise ExitCLI(msg)
 
     short_id = image.short_id.split(':')[1]
     print("\nSuccessfully pulled {}:{}\n".format(image_name, short_id))
 
 
-def _check_for_api(launch_browser=False, timeout=5):
+def _check_for_api(launch_browser: bool = False, timeout: int = 5):
     """Check for the API to be live for up to `timeout` seconds, then optionally launch a browser window
 
     Args:
@@ -210,16 +203,16 @@ def _check_for_api(launch_browser=False, timeout=5):
     return success
 
 
-def start(image_name, timeout, tag=None):
+def start(image_name: str, timeout: int, tag: Optional[str] = None, working_dir: str = "~/gigantum",
+          accept_confirmation: bool = False) -> None:
     """Method to start the application
 
     Args:
-        image_name(str): Image name, including repository and namespace (e.g. gigantum/labmanager)
-        timeout(int): Number of seconds to wait for API to come up
-        tag(str): Tag to run, defaults to latest
-
-    Returns:
-        None
+        image_name: Image name, including repository and namespace (e.g. gigantum/labmanager)
+        timeout: Number of seconds to wait for API to come up
+        tag: Tag to run, defaults to latest
+        working_dir: Location to mount as the Gigantum working directory
+        accept_confirmation: Optional Flag indicating if you should skip the confirmation and auto-accept
     """
     # Make sure user is not root
     if is_running_as_admin():
@@ -232,17 +225,23 @@ def start(image_name, timeout, tag=None):
     if not tag:
         # Trying to update to the latest version
         tag = 'latest'
+    image_name_with_tag = "{}:{}".format(image_name, tag)
 
     # Check if working dir exists
-    working_dir = os.path.join(os.path.expanduser("~"), "gigantum")
+    working_dir = os.path.expanduser(working_dir)
     if not os.path.exists(working_dir):
         os.makedirs(working_dir)
 
     # Check if application has been installed
     try:
-        docker.client.images.get("{}:{}".format(image_name, tag))
+        docker.client.images.get(image_name_with_tag)
     except ImageNotFound:
-        raise ExitCLI("Gigantum Client image not found. Did you run `gigantum install` yet?")
+        if ask_question("The Gigantum Client Docker image not found. Would you like to install it now?",
+                        accept_confirmation):
+            install(image_name)
+        else:
+            raise ExitCLI("Downloading the Gigantum Client Docker image is required to start the Client. "
+                          "Please run `gigantum install`.")
 
     # Check to see if already running
     try:
@@ -269,12 +268,15 @@ def start(image_name, timeout, tag=None):
 
     volume_mapping = {docker.share_vol_name: {'bind': '/mnt/share', 'mode': 'rw'}}
 
+    print('Host directory for Gigantum files: {}'.format(working_dir))
     if platform.system() == 'Windows':
-        # windows docker has the following eccentricities
-        # no user ids, WINDOWS_HOST env var, /C/a/b/ format for volume C:\\a\\b
-        environment_mapping = {'HOST_WORK_DIR': docker.dockerize_volume_path(working_dir),
+        # windows docker has some eccentricities
+        # no user ids, we specify a WINDOWS_HOST env var, and need to rewrite the paths for
+        # bind-mounting inside the Client (see `dockerize_mount_path()` for details)
+        rewritten_path = docker.dockerize_mount_path(working_dir, image_name_with_tag)
+        environment_mapping = {'HOST_WORK_DIR': rewritten_path,
                                'WINDOWS_HOST': 1}
-        volume_mapping[docker.dockerize_volume_path(working_dir)] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
+        volume_mapping[working_dir] = {'bind': '/mnt/gigantum', 'mode': 'rw'}
 
     elif platform.system() == 'Darwin':
         # For macOS, use the cached mode for improved performance
@@ -290,7 +292,7 @@ def start(image_name, timeout, tag=None):
 
     volume_mapping['/var/run/docker.sock'] = {'bind': '/var/run/docker.sock', 'mode': 'rw'}
 
-    container = docker.client.containers.run(image="{}:{}".format(image_name, tag),
+    container = docker.client.containers.run(image=image_name_with_tag,
                                              detach=True,
                                              name=image_name.replace("/", "."),
                                              init=True,
@@ -300,9 +302,9 @@ def start(image_name, timeout, tag=None):
     print("Starting, please wait...")
     time.sleep(1)
 
-    # Make sure volumes have mounted properly, by checking for the log file for up to 30 seconds
+    # Make sure volumes have mounted properly, by checking for the log file for up to timeout seconds
     success = False
-    for _ in range(30):
+    for _ in range(timeout):
         if os.path.exists(os.path.join(working_dir, '.labmanager', 'logs', 'labmanager.log')):
             success = True
             break
@@ -327,7 +329,7 @@ def start(image_name, timeout, tag=None):
     # Wait for API to be live before opening the user's browser
     if not _check_for_api(launch_browser=True, timeout=timeout):
         msg = "\n\nTimed out waiting for Gigantum Client web API! Try restarting Docker and then start again." + \
-                "\nOr, increase time-out with --wait option (default is 30 seconds)."
+                "\nOr, increase time-out with --wait option (default is 60 seconds)."
 
         # Stop and remove the container
         container.stop()
@@ -336,17 +338,47 @@ def start(image_name, timeout, tag=None):
         raise ExitCLI(msg)
 
 
-def stop():
+def stop(accept_confirmation=False):
     """Method to stop all containers
+    Args:
+        accept_confirmation(bool): Optional Flag indicating if you should skip the confirmation and auto-accept
 
     Returns:
         None
     """
-    if ask_question("Stop all Gigantum managed containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!"):
+    if ask_question("Stop all Gigantum managed containers? MAKE SURE YOU HAVE SAVED YOUR WORK FIRST!",
+                    accept_confirmation):
         # remove any lingering gigantum managed containers
         _cleanup_containers()
     else:
         raise ExitCLI("Stop command cancelled")
+
+
+def add_server(working_dir: str = "~/gigantum"):
+    """Method to add a server to this Client's configuration
+    Args:
+        working_dir(str): Working dir for the client
+
+    Returns:
+        None
+    """
+    print("\n\nEnter the server URL to add (e.g. https://gigantum.mycompany.com): ")
+    server_url = input()
+    server_config = ServerConfig(working_dir=working_dir)
+    server_config.add_server(server_url)
+    print("\nServer successfully added. The server will now be available on your Client login page.")
+
+
+def list_servers(working_dir: str = "~/gigantum"):
+    """Method to list servers this Client is configured to use
+    Args:
+        working_dir(str): Working dir for the client
+
+    Returns:
+        None
+    """
+    server_config = ServerConfig(working_dir=working_dir)
+    server_config.list_servers(should_print=True)
 
 
 def feedback():

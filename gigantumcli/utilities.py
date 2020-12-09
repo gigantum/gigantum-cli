@@ -32,15 +32,19 @@ class ExitCLI(Exception):
     pass
 
 
-def ask_question(question):
+def ask_question(question, accept_confirmation=False):
     """Method to ask the user a yes/no question
 
     Args:
         question(str): A question to ask the user
+        accept_confirmation(bool): Optional flag, if True will automatically accept question
 
     Returns:
         bool: True if yes, False if no
     """
+    if accept_confirmation:
+        return True
+
     valid_response = {"yes": True, "y": True, "no": False, "n": False}
 
     while True:
@@ -77,6 +81,10 @@ def get_nvidia_driver_version() -> Optional[str]:
                 m = re.match(r"([\d.]+)", output.decode())
                 if m:
                     driver_version = m.group(0)
+
+                # If driver has a build version, strip it because we don't match on that.
+                parts = driver_version.split('.')
+                driver_version = f"{parts[0]}.{parts[1]}"
 
         except FileNotFoundError:
             pass
