@@ -52,8 +52,29 @@ class ChangeLog(object):
         Returns:
             bool
         """
-        latest_hash = self.data['latest']['id']
-        return latest_hash != tag
+        latest_image_id = self.data['latest']['id']
+        return latest_image_id != tag
+
+    def latest_tag(self):
+        """Method to get the latest tag from the changelog data
+
+        Returns:
+            str
+        """
+        latest_image_id = self.data['latest']['id']
+        tag = None
+        for t in self.data:
+            if t == "latest":
+                continue
+
+            if self.data[t]['id'] == latest_image_id:
+                tag = t
+                break
+
+        if not tag:
+            raise ValueError("Failed to look up latest image tag.")
+
+        return tag
 
     def get_changelog(self, tag="latest"):
         """Method to print the changelog data

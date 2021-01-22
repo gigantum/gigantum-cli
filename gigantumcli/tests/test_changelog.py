@@ -42,6 +42,11 @@ class TestChangelog(object):
         with pytest.raises(ValueError):
             cl.get_changelog('acdfacdf')
 
+    def test_get_latest_tag(self, fixture_changelog_data):
+        """Test checking if an update is available"""
+        cl = ChangeLog()
+        assert cl.latest_tag() == "abcdef"
+
     def test_get_changelog(self, fixture_changelog_data):
         """Test getting a changelog string"""
         cl = ChangeLog()

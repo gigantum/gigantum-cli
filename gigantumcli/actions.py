@@ -92,7 +92,10 @@ def install(image_name):
         except ImageNotFound:
             # Pull for the first time
             print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
-            image = docker.client.images.pull(image_name, 'latest')
+            cl = ChangeLog()
+            tag = cl.latest_tag()
+            image = docker.client.images.pull(image_name, tag)
+            docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
 
     except APIError:
         msg = "ERROR: failed to pull image! Verify your internet connection and try again."
@@ -148,7 +151,7 @@ def update(image_name, tag=None, accept_confirmation=False):
             # Edge build, set tag if needed
             if not tag:
                 # Trying to update to the latest version
-                tag = 'latest'
+                tag = cl.latest_tag()
 
         # Make sure user wants to pull
         if ask_question("Are you sure you want to update?", accept_confirmation):
@@ -157,9 +160,7 @@ def update(image_name, tag=None, accept_confirmation=False):
             image = docker.client.images.pull(image_name, tag)
 
             # If pulling not truly latest, force to latest
-            if tag != 'latest':
-                print("Tagging explicit version {} with latest".format(tag))
-                docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
+            docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
         else:
             raise ExitCLI("Update cancelled")
     except APIError:
