@@ -164,7 +164,7 @@ def update(image_name, tag=None, accept_confirmation=False):
             image = docker.client.images.pull(image_name, tag)
 
             # Tag to latest locally
-            docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
+            docker.client.api.tag('{}:{}'.format(image_name, tag), image_name, 'latest')
         else:
             raise ExitCLI("Update cancelled")
     except APIError:

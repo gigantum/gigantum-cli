@@ -7,16 +7,16 @@ import getpass
 
 from gigantumcli.utilities import ExitCLI
 from gigantumcli.dockerinterface import DockerInterface
-from gigantumcli.actions import start, install
+from gigantumcli.actions import start, install, update
 
 
 @pytest.fixture()
-def fixture_remove_busybox():
-    """Fixture start fake project and client containerss"""
+def fixture_remove_client():
+    """Fixture start fake project and client containers"""
     docker = DockerInterface()
     try:
         # Check to see if the image has already been pulled
-        img = docker.client.images.get('busybox')
+        img = docker.client.images.get('gigantum/labmanager:latest')
         docker.client.images.remove(img.id, force=True)
     except ImageNotFound:
         pass
@@ -54,7 +54,31 @@ class TestActions(object):
         from gigantumcli.utilities import is_running_as_admin
         assert is_running_as_admin() is False
 
-    def test_install(self, fixture_remove_busybox):
+    def test_update(self, fixture_remove_client):
+        docker = DockerInterface()
+
+        # image should exist not exist before install
+        try:
+            # Check to see if the image has already been pulled
+            docker.client.images.get('gigantum/labmanager:latest')
+            assert "Image should not exist"
+        except ImageNotFound:
+            pass
+
+        # Pull old image
+        old_tag = "55f05c26"
+        docker.client.images.pull("gigantum/labmanager", old_tag)
+        docker.client.api.tag('{}:{}'.format("gigantum/labmanager", old_tag), "gigantum/labmanager", 'latest')
+
+        update("gigantum/labmanager", accept_confirmation=True)
+
+        # Latest should be a new image
+        current_image = docker.client.images.get("{}:latest".format("gigantum/labmanager"))
+        short_id = current_image.short_id.split(':')[1]
+        print(short_id)
+        assert old_tag != short_id
+
+    def test_install(self, fixture_remove_client):
         docker = DockerInterface()
 
         # image should exist not exist before install
