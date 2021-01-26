@@ -94,14 +94,10 @@ def install(image_name):
             print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             cl = ChangeLog()
             tag = cl.latest_tag()
-            print(image_name)
-            print(tag)
             image = docker.client.images.pull(image_name, tag)
-            print("PULLED!")
             docker.client.api.tag('{}:{}'.format(image_name, tag), image_name, 'latest')
 
     except APIError as err:
-        print(err)
         msg = "ERROR: failed to pull image! Verify your internet connection and try again."
         raise ExitCLI(msg)
 
