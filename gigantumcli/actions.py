@@ -94,6 +94,8 @@ def install(image_name):
             print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             cl = ChangeLog()
             tag = cl.latest_tag()
+            print(image_name)
+            print(tag)
             image = docker.client.images.pull(image_name, tag)
             docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
 
