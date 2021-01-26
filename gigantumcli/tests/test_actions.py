@@ -60,20 +60,20 @@ class TestActions(object):
         # image should exist not exist before install
         try:
             # Check to see if the image has already been pulled
-            docker.client.images.get('busybox')
+            docker.client.images.get('gigantum/labmanager:latest')
             assert "Image should not exist"
         except ImageNotFound:
             pass
 
-        install('busybox')
+        install('gigantum/labmanager')
 
         # image should exist after install
         docker = DockerInterface()
-        docker.client.images.get('busybox')
+        docker.client.images.get('gigantum/labmanager')
 
         # Calling again should exit with a message since already installed
         with pytest.raises(ExitCLI):
-            install('busybox')
+            install('gigantum/labmanager')
 
     @pytest.mark.skipif(getpass.getuser() == 'circleci', reason="Cannot run this test in CircleCI, needs access "
                                                                 "to docker machine file system")

@@ -128,7 +128,7 @@ def update(image_name, tag=None, accept_confirmation=False):
             # Normal install, so do checks
             if not tag:
                 # Trying to update to the latest version
-                tag = 'latest'
+                tag = cl.latest_tag()
 
                 # Get id of current labmanager install
                 try:
@@ -151,7 +151,7 @@ def update(image_name, tag=None, accept_confirmation=False):
             # Edge build, set tag if needed
             if not tag:
                 # Trying to update to the latest version
-                tag = cl.latest_tag()
+                tag = "latest"
 
         # Make sure user wants to pull
         if ask_question("Are you sure you want to update?", accept_confirmation):
@@ -159,7 +159,7 @@ def update(image_name, tag=None, accept_confirmation=False):
             print("\nDownloading and installing the Gigantum Client Docker Image. Please wait...\n")
             image = docker.client.images.pull(image_name, tag)
 
-            # If pulling not truly latest, force to latest
+            # Tag to latest locally
             docker.client.api.tag('{}:{}'.format(tag, image_name), image_name, 'latest')
         else:
             raise ExitCLI("Update cancelled")
